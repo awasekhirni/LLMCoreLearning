@@ -1,0 +1,73 @@
+Inside Large Language Models
+
+Concept Summary (ELI5)
+
+Imagine you have a giant box of letter tiles, and you want to build sentences one tile at a time. A Large Language Model (LLM) is like a very smart friend who has read millions of books. When you show your friend a few tiles, they peek at all of them, decide which ones are most important to remember, and then guess the next tile that would make the most sense. Inside the friend's head are little helpers called Transformer blocks — each helper first listens to all the tiles (that's "Attention"), then thinks about them (that's the "Feed-Forward Network"), and passes the result along. Helpers also write little sticky notes (the "KV Cache") so they don't have to re-read old tiles every time. Finally, the friend raises a hand for every possible next tile — the higher the hand, the more confident — and we pick one. That's it! Reading tiles, deciding what matters, guessing the next tile, repeat.
+
+
+Use Cases
+
+2.1 GitHub Copilot–style Code Completion (Autoregressive Loop, KV Cache)
+
+Software engineers spend a large fraction of their day typing boilerplate: import statements, getter/setter pairs, API client wrappers, test fixtures, and serializer functions. Code completion models such as Copilot, Tabnine, and Codeium autocomplete the next dozens of characters as the engineer types. The hard problem is latency: keystrokes arrive one at a time, but recomputing the full transformer forward pass over the entire file for every keystroke would be far too slow. The autoregressive loop paired with the KV Cache solves exactly this — past token Key/Value matrices are stored, and only the new token's K/V is computed, so inference scales linearly in context length per step rather than quadratically. This concept fit is direct: completion is a left-to-right, "predict next token" task — the canonical use case for autoregressive transformers with cached inference.
+2.2 ChatGPT-style Conversational Assistants (Causal Masking, Grouped-Query Attention)
+
+A conversational assistant must read a multi-turn chat history and produce a helpful reply. The conversation is inherently left-to-right: the assistant must not "peek" at the user's next message before writing its current one. Causal masking enforces this by zeroing future attention weights during softmax. Grouped-Query Attention (GQA) is the architectural choice that makes serving millions of simultaneous chat users economically viable: by sharing Key/Value heads across multiple Query heads, GQA slashes the HBM memory bandwidth consumed by the KV Cache, which dominates cost at long conversation lengths (8k–128k tokens). Chat assistants are the textbook use case because they simultaneously demand long context, autoregressive generation, and per-token latency targets measured in tens of milliseconds.
+
+2.3 Long-Document Summarization (Attention, RoPE)
+
+Legal firms, news agencies, and biomedical researchers routinely need summaries of 50–200 page documents. The challenge: classical attention scales as O(n²) in sequence length, and the model must track where in the document each token sits. Rotary Positional Embeddings (RoPE) solve the position-tracking problem elegantly — instead of adding a positional vector (which fails to generalize to longer contexts than seen in training), RoPE rotates Query and Key vectors so their dot product naturally encodes relative distance. This means a token attends the same way regardless of whether the document starts at position 0 or position 50000. Summarization is a perfect fit because (a) every output token must attend across the whole input (cross-attention / encoder-decoder or unified decoder), and (b) generalization to unseen lengths is critical since document sizes vary wildly.
+2.4 Real-time Speech-to-Speech Translation (Transformer Block Stack, RMSNorm)
+
+Live speech translation (e.g., Microsoft Teams translator, Google Meet captions) requires streaming audio→text→translation→speech in under 300 ms end-to-end. Each transformer block adds latency, so engineers must minimize per-block compute. RMSNorm replaces LayerNorm precisely because it removes the mean-subtraction step, saving one full tensor reduction per block — multiply that by 32–80 stacked blocks and the savings are real. SwiGLU activation in the feed-forward sub-layer further trims FLOPs versus GELU/ReLU while improving quality. Speech-to-speech translation is a strong match because (a) it is fully autoregressive over tokens, (b) latency budgets are tight enough that every microsecond per block counts, and (c) the residual+normalization pattern is what allows gradients to flow through 60+ blocks during training without exploding or vanishing.
+2.5 Semantic Search & RAG Retrieval (Embedding Lookup, Linear Projections)
+
+Retrieval-Augmented Generation (RAG) systems like Anthropic's Claude-powered enterprise search embed documents into vectors and retrieve top-k neighbors for any query. The pipeline relies on two operations from this chapter: (1) the embedding matrix lookup converts raw token IDs into dense context vectors that capture semantic meaning, and (2) linear projections (a.k.a. the "pooling head" or "LM head") project final hidden states down to a fixed-size vector usable by a vector database like FAISS or Pinecone. Without these two pieces, there is no way to turn a symbolic token into a geometric, distance-comparable point. Semantic search fits because it is the textbook use case where "tokens become vectors" is the entire value proposition, and the projection layer is what controls the vector dimension that downstream indexes expect.
+2.6 Content Moderation at Scale (Softmax, Logits)
+
+Social platforms must classify whether each user post is safe, spam, hate, self-harm, etc., within seconds of submission. The technique: take a pretrained LLM, attach a small classification head that outputs K raw scores (logits) for K classes, apply softmax to convert logits into calibrated probabilities, and threshold the highest class. Softmax is the linchpin — it squashes arbitrary-magnitude scores into [0, 1] and normalizes them to sum to 1, which is essential for setting meaningful thresholds ("block only if hate-speech probability > 0.9") and for combining multiple model votes. Content moderation fits because the requirement is precisely: take a long sequence, produce a single probability distribution over a small fixed label set — i.e., exactly the logits→softmax→argmax pattern this chapter teaches.
+2.7 Structured Data Extraction from Documents (LM Head Projection, Sampling)
+
+Extracting structured fields (invoice totals, patient names, contract dates) from unstructured PDFs is a billion-dollar problem (e.g., AWS Textract, DocuSign). Modern approaches fine-tune a small LLM to output JSON token-by-token. The LM head — a final linear projection from hidden_dim to vocab_size — is what produces the raw logits over the (constrained) JSON vocabulary. Then a constrained decoding strategy (greedy or top-p sampling) selects the next token, often with a grammar mask that bans invalid JSON. This use case demonstrates the full pipeline from this chapter: embeddings → transformer stack → LM head logits → softmax → sampling → autoregressive append. It fits because the output is literally a sequence of tokens generated one at a time, with every architectural piece (KV cache for speed, causal mask for left-to-right JSON validity, RMSNorm for stacked-block training) playing its part.
+2.8 AI Code Review & Bug Detection (Multi-Layer Transformer Stack, Residuals)
+
+Tools like DeepCode/Snyk scan repositories and flag security vulnerabilities. A code-review LLM must understand long-range dependencies: a function call on line 800 might be unsafe because of how a variable was initialized on line 30. Stacking N transformer blocks deepens the "receptive field" — each block re-attends to the (already-attended) output of the previous block, so after N blocks the model effectively integrates information across ~N times more hops of the attention graph. Residual connections are what make this stacking actually trainable: without them, gradients would vanish by block 5 of 32. Code review is the canonical use case because (a) dependencies span thousands of tokens, (b) the signal is subtle (a single character can flip a vulnerability classification), and (c) we need the deepest stack we can train.
+2.9 On-device Personalized Autocomplete on Phones (Flash Attention, GQA)
+
+Mobile keyboards (Gboard, SwiftKey) autocomplete the next word using a transformer that runs on the phone. The constraints are brutal: <100 mW power, <50 MB of RAM, <20 ms latency. Flash Attention is the algorithmic win — it reorders the classical attention computation to keep intermediate matrices in fast GPU/NPU SRAM rather than round-tripping through HBM, cutting both memory and energy by 5–10×. GQA complements this by shrinking the KV Cache so the model fits in on-device SRAM entirely. On-device autocomplete fits because (a) it is the strictest deployment envelope where every architectural optimization in this chapter pays off, and (b) the task itself is literally "predict next token" — the autoregressive loop in its purest commercial form.
+3. Assumptions
+#
+
+Assumption
+A1	Python version: 3.10+ (uses match/dataclasses features).
+A2	Primary numeric backend: NumPy. The technical card shows PyTorch equivalents in supplementary snippets, but the runnable pedagogical code uses only NumPy so learners can print() every intermediate tensor.
+A3	No real pretrained weights: All weights are randomly initialized with seed=42 so outputs are deterministic but not linguistically meaningful. The goal is architectural understanding, not language modeling quality.
+A4	Tokenizer abstracted: Per the technical card, tokenization is Chapter 2's job. We accept token IDs as integers and skip real text ↔ token conversion. A toy vocab of 20 "words" is used.
+A5	Interpretation of "use cases per item": The phrasing is ambiguous. We provide 9 total use cases, each tagged with the concept(s) from the technical card it exercises, rather than 7–10 use cases per item (which would balloon to 100+ entries).
+A6	Sequence lengths in code are tiny (≤32) so the entire forward pass fits on screen. Production LLMs use 4k–128k; the math is identical, only shapes change.
+A7	GQA is implemented with num_kv_heads < num_heads; K/V are physically repeated (a "broadcast" simulating shared heads) for clarity rather than the production trick of broadcasting in the matmul.
+A8	RoPE uses the original "rotate every consecutive pair" formulation (not the GPT-NeoX interleaved variant).
+A9	Flash Attention is described and visualized conceptually — a true Flash Attention implementation requires CUDA/Triton kernels. We simulate its memory-saving effect with a chunked NumPy loop.
+A10	No backward pass / training is implemented. The chapter is about architecture and inference, not gradient descent.
+A11	Floating point tolerance: Stochastic ops use np.random.seed(42); expected values reported with ±1e-6 tolerance.
+
+
+
+Required Python Packages
+
+ pip3 install numpy pandas matplotlib scikit-learn
+
+     numpy>=1.24 — tensor math (softmax, matmul, RoPE rotations)
+     pandas>=2.0 — small data inspection / result tables
+     matplotlib>=3.7 — visualizations
+     scikit-learn>=1.3 — used only for toy datasets / utilities
+
+Optional (production equivalent): torch>=2.1 — PyTorch mirrors the same math as GPU kernels. We justify its mention because the technical card itself ships PyTorch snippets; however, every runnable cell in this module uses only NumPy so beginners can trace every number by hand.
+
+
+
+| Name | Origin | License | Size | Schema | Used For |
+|---|---|---|---|---|---|
+| Synthetic Toy Corpus (generated below, seed=42) | This module | CC0 (generated) | 1 file, ~200 token IDs | `np.ndarray[int32]` shape `(N,)`, values in `[0, vocab_size)` | Main runnable exercises |
+| Tiny Shakespeare | https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt (canonical Karpathy URL) | CC BY 3.0 (Shakespeare corpus) | ~1 MB text | UTF-8 text | Optional stretch exercise |
+| scikit-learn `fetch_20newsgroups` (toy subset) | `sklearn.datasets.fetch_20newsgroups()` | BSD-3 (sklearn) | ~14 MB text | List[str] of newsgroup posts | Optional real-text exercise |
