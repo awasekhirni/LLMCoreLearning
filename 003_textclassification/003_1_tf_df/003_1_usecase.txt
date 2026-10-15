@@ -1,0 +1,60 @@
+ELI5 (Summary)
+
+Imagine you have a big pile of storybooks and you want to know which words make each book special. Words like "the", "and", and "is" show up in almost every book, so they aren't special at all — they are like background noise. But a word like "dinosaur" appearing many times in just one book is a clue that the book is about dinosaurs. TF-IDF is a clever scoring system that gives each word in each book a number: the number goes up if the word shows up a lot in that book, but it goes down if the word shows up in lots of other books too. So the words with the highest scores are the ones that really describe what that specific book is about — its personal "fingerprint."
+
+
+Use Cases
+2.1 Search Engines & Document Ranking
+
+When a user types a query like "best electric cars 2024", a search engine must rank millions of web pages by relevance. Simple term matching fails because common words dominate. TF-IDF solves this by down-weighting terms that appear across many pages (e.g., "best", "2024") and boosting distinctive query terms (e.g., "electric", "cars") when they concentrate in a specific page. Each web page is converted into a TF-IDF vector during indexing. At query time, the query is vectorized the same way and a cosine similarity is computed against page vectors. Pages that share rare, important terms with the query get high scores. This fits TF-IDF because it naturally captures how informative a term is within a corpus, providing an interpretable, fast, and unsupervised ranking signal. Even modern systems (BM25, transformer-based retrievers) keep TF-IDF as a strong baseline and first-stage retriever because of its simplicity and surprising effectiveness on short queries.
+2.2 Spam Email Classification
+
+Spam filters must label an incoming email as spam or ham using only its text. Hand-crafting rules ("if email contains 'lottery' → spam") is brittle. TF-IDF vectorizes each email so that terms strongly associated with spam — "winner", "prize", "click here", "Viagra" — receive high weights because they appear frequently in spam but rarely in legitimate mail. A classifier such as Logistic Regression or Naïve Bayes trained on top of these vectors learns which high-weight terms correlate with the spam label. The concept fits because spam vocabulary is highly distinctive and concentrated, exactly what TF-IDF is designed to surface. It is also fast enough to score thousands of emails per second, works without labeled pretraining beyond the classifier, and yields interpretable coefficients that security analysts can inspect ("why was this message flagged?"). Many production email systems still use TF-IDF as a feature layer before ML classifiers.
+2.3 Resume Screening & Job Matching
+
+Recruiters receive hundreds of resumes per posting and must shortlist candidates whose skills match the job description. Keyword counting alone fails: every resume contains "team", "experience", "responsible". TF-IDF represents both the job description and each resume as vectors in a shared vocabulary space where rare, technical terms — "Kubernetes", "PyTorch", "Kafka", "SOX" — get large weights. Cosine similarity between job vector and resume vectors produces a ranked candidate list. TF-IDF is appropriate because technical skill terms are exactly the high-IDF tokens that distinguish qualified candidates, while generic corporate jargon is suppressed automatically. The approach is transparent (the recruiter can see which terms drove the match), language-agnostic given the right tokenizer, and trivially retrainable when the job description changes. Modern ATS platforms layer neural embeddings on top, but TF-IDF remains a robust fallback and an interpretable sanity check.
+2.4 News Article Categorization
+
+News agencies publish thousands of articles daily across categories like Sports, Politics, Tech, and Health. Categorizing them automatically requires features that capture topic. TF-IDF converts each article into a sparse vector where sports-specific terms ("touchdown", "wicket", "set point") get high weights precisely because they don't appear in political or health articles. A linear classifier (SVM, logistic regression) trained on these vectors reaches >90% accuracy on benchmarks like 20 Newsgroups and Reuters. TF-IDF fits because news categories are largely defined by distinctive vocabularies, and the IDF component naturally discounts widespread journalistic connective tissue. It scales to millions of articles with sparse matrix representations, requires no GPU, and supports incremental updates as new articles arrive. Even today, transformer fine-tunes are benchmarked against TF-IDF+SVM, which often wins on small datasets.
+2.5 Plagiarism Detection
+
+Academic institutions and publishers must detect when a submitted document reuses text from existing sources. Pure substring matching is defeated by paraphrasing or minor edits. TF-IDF represents each document as a vector capturing its unique vocabulary profile; suspiciously similar documents have high cosine similarity even when word order changes. Pairwise similarity over a corpus of submissions plus a reference set flags likely plagiarism. TF-IDF fits because copied passages bring in rare, topical words that inflate shared high-IDF dimensions, producing large similarity scores, while innocuous overlap in function words contributes almost nothing. The method also enables passage-level detection by vectorizing sliding windows of text. Although semantic embeddings improve recall on paraphrased text, TF-IDF remains the workhorse for verbatim and near-verbatim detection due to its precision, speed, and auditability.
+2.6 Content-Based Article Recommendations
+
+On a platform like Medium, an article reader should be recommended similar articles. With no explicit user ratings, the system must rely on text content. TF-IDF vectors each article; for the currently read article, the system computes cosine similarity against all other articles and recommends the top-k. The concept fits because articles sharing distinctive terminology — same niche, same technical depth — naturally cluster in TF-IDF space, while generic lifestyle articles that share only common words stay far apart. The pipeline is unsupervised, scales linearly with corpus size using sparse matrices and approximate nearest-neighbor indexes (e.g., FAISS, Annoy), and is trivially cold-start friendly: a brand-new article gets a vector immediately upon publication. Many production recommendation systems use TF-IDF as the candidate-generation stage before a neural ranker.
+2.7 Keyword Extraction
+
+Editors, SEO analysts, and summarization systems need to extract the 5–10 most representative keywords from a document. Counting the most frequent words yields "the," "and," "is." TF-IDF instead ranks terms by their TF-IDF score within that document relative to a background corpus, returning genuinely topical keywords. For this single document, a global IDF table (precomputed from Wikipedia, news archives, or a domain corpus) provides the inverse-document-frequency values. TF-IDF is the textbook fit because keyword-ness is operationally defined as "frequent here, rare elsewhere," which is exactly what the score measures. Variants such as averaging TF-IDF across sliding windows, or combining with part-of-speech filters (only nouns/adjectives), yield the well-known TextRank-competitive baselines. The method is unsupervised, interpretable, and runs in milliseconds — ideal for interactive editing tools and dashboards.
+2.8 FAQ / Question-Answering Retrieval
+
+Customer support chatbots receive free-text questions and must surface the most relevant FAQ entry. Embedding each FAQ answer (and optionally the question) as a TF-IDF vector creates a retrievable index. At inference, the user's query is vectorized and the nearest FAQ is returned. TF-IDF fits because FAQs tend to use distinctive domain vocabulary ("refund", "shipping", "RMA", "two-factor authentication") that produces crisp high-IDF signals. Compared to dense embeddings, TF-IDF is more transparent (you can show "matched on terms: refund, RMA"), requires zero training data, and degrades gracefully on out-of-vocabulary queries — it just returns low-confidence matches rather than confidently wrong ones. It is the standard first iteration of every FAQ bot and remains in production for tier-1 support where latency budgets are tight (sub-10ms) and interpretability is mandated.
+2.9 Sentiment Analysis Feature Engineering
+
+Sentiment classifiers (positive/negative/neutral) benefit from lexical features. TF-IDF provides weighted unigram and bigram features where emotionally charged but rare words ("abysmal", "stunning", "overpriced") receive higher weights than neutral connectives. Combined with a linear model, TF-IDF features regularly hit 85–90% accuracy on IMDb reviews and SST-2, competitive with far more expensive models. TF-IDF fits because sentiment is often expressed through distinctive vocabulary whose informativeness scales inversely with corpus frequency. Furthermore, TF-IDF coefficients are inspectable — analysts can verify that the model learned sensible polarity cues. While transformer models now top leaderboards, TF-IDF + Logistic Regression remains the strong, cheap baseline that every new method must beat, and is the default choice for low-resource languages and edge deployment where transformer inference is infeasible.
+2.10 Document Clustering & Topic Discovery
+
+A legal firm with 100,000 contracts wants to group them thematically without manual labels. TF-IDF vectorizes each document; K-Means (or spherical K-Means using cosine distance) clusters the vectors. The top-weighted terms per cluster centroid become human-readable topic labels. TF-IDF fits because it transforms documents into a geometry where topical similarity is encoded as proximity — two contracts about mergers will share high-IDF terms like "acquisition", "consideration", "indemnification" and land in the same cluster, while a contract about real estate won't. The dimensionality of TF-IDF (typically 10k–100k) is sparse and tractable. The pipeline is fully unsupervised, interpretable, and reproducible. It is the standard first step in any text-mining engagement before deciding whether more expensive neural topic models (BERTopic, LDA) are warranted.
+
+
+Assumptions
+- language english - tokenizer is regex based
+-stop words - none removed by default; a configurable set can be supplied. We do NOT hard-code English stop words to avoid silent behaviour changes
+ Stemming/Lemmatization: Out of scope. Mentioned only as an extension exercise.
+ IDF smoothing: idf(t) = ln((1 + N) / (1 + df(t))) + 1 (sklearn default with smooth_idf=True). Prevents division by zero and zero-IDF for universally present terms.
+ TF: Raw count divided by total tokens in document (sklearn uses raw counts and normalizes later via L2).
+ Normalization: L2 row normalization applied to final TF-IDF vectors (sklearn default).
+ max_df/min_df: Configurable; default keeps all terms.
+ Sparse representation: We use scipy.sparse internally (via sklearn) for scalability, but expose dense arrays for toy examples.
+ Reproducibility: All synthetic data uses np.random.default_rng(seed=42).
+ Math notation: ln = natural log; all logs are natural unless stated.
+
+
+
+Datasets
+Primary Dataset: 20 Newsgroups (scikit-learn built-in)
+
+     Origin: sklearn.datasets.fetch_20newsgroups (mirrors the original UCI corpus).
+     License: Freely redistributable for non-commercial research (see sklearn docs).
+     Size: ~18,846 posts across 20 categories; ~11 MB uncompressed.
+     Schema: data: List[str], target: np.ndarray[int], target_names: List[str].
+     Download: auto-downloaded by sklearn on first call to a cached directory (~/scikit_learn_data).
