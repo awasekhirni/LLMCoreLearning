@@ -1,51 +1,60 @@
 """
-Author: Awase Khirni Syed, May 19, 2025
+Author: Awase Khirni Syed, 03/October/2025
 Copyright 2025 β ORI Inc.Canada All Rights Reserved.
-    * Full type hints and NumPy-style docstrings on every class and method
-    * Modular, composable class hierarchy
-    * Complete KV-cache implementation ( "Speeding Up Generation by
-      Caching Keys and Values") — enables ~4–5x faster autoregressive decoding
-    * Grouped-Query Attention (GQA) — , "Multi-query and grouped-query
-      attention"
-    * Rotary Position Embeddings (RoPE) —  "Positional Embeddings (RoPE)"
-    * SwiGLU feedforward activation — , "The Transformer Block"
-    * RMSNorm (pre-normalization) — , "The Transformer Block"
-    * Weight tying between token embedding and LM head (reduces parameters)
-    * Multiple sampling strategies (greedy, temperature, top-k, top-p,
-      repetition penalty) —
-    * Gradient accumulation, cosine LR schedule with warmup, gradient
-      clipping, mixed-precision training (AMP)
-    * Checkpoint save/load (model + optimizer + config + tokenizer)
-    * Contrastive text-embedding head
-    * Classification head
-    * Attention-mask utilities for padding + causal masking
-    * Numerical stability safeguards (logit clamping, epsilon handling)
-    * Reproducibility helpers (seed control)
+
+This module implements a complete, working, decoder-only Transformer LLM from
+scratch in PyTorch, covering every major concept discussed in the book:
+
+
+   Tokens & Embeddings (BPE tokenizer, token embeddings,
+             contextualized embeddings, text embeddings)
+   Inside LLMs (Transformer blocks, self-attention, KV cache,
+             RoPE, RMSNorm, SwiGLU, GQA, parallel token processing,
+             sampling/decoding strategies)
+   Text Classification (task head)
+   Prompt Engineering (sampling controls: temperature, top-k, top-p)
+   Advanced Text Generation (memory, chains, agents scaffold)
+   Text Embedding Models (contrastive learning)
+   Fine-Tuning Representation Models (classification head)
+   Fine-Tuning Generation Models (SFT / preference tuning scaffold)
+
+
+
+  * Full type hints and NumPy-style docstrings on every class and method
+  * Modular, composable class hierarchy
+  * Complete KV-cache implementation (Ch. 3) — enables ~4-5x faster
+    autoregressive decoding
+  * Grouped-Query Attention (GQA) — Ch. 3
+  * Rotary Position Embeddings (RoPE) — Ch. 3
+  * NTK-aware RoPE scaling for long-context extrapolation
+  * SwiGLU feedforward activation — Ch. 3
+  * RMSNorm (pre-normalization) — Ch. 3
+  * Weight tying between token embedding and LM head (reduces parameters)
+  * Multiple sampling strategies (greedy, temperature, top-k, top-p,
+    min-p, repetition penalty) — Ch. 6
+  * Gradient accumulation, cosine LR schedule with warmup, gradient
+    clipping, mixed-precision training (AMP, bf16 on Ampere+)
+  * Gradient checkpointing for memory-efficient large-model training
+  * Checkpoint save/load (model + optimizer + config + tokenizer)
+  * HuggingFace-style `save_pretrained` / `from_pretrained` directory API
+  * Batched generation with left-padding
+  * Streaming generation (token-by-token yield)
+  * Real (non-stub) ClassificationHead and EmbeddingModel that run the
+    full backbone
+  * Unified attention-mask builder (causal + padding + cache-aware)
+  * KVCache container class with reset / detach / to-device
+  * Numerical stability safeguards (logit clamping, epsilon handling,
+    uniform fallback for degenerate sampling distributions)
+  * Reproducibility helpers (seed control with optional cudnn.deterministic)
+  * `logging` module integration (no bare `print` calls)
+  * Explicit `__all__` public API surface
 
 QUICK START
 -----------
-    python betaORI_ollmdemo.py
+    python betaori_llmcore.py
 
 This will train a tiny model on a small corpus so you can see end-to-end
 next-token prediction working. Swap in your own corpus / config for real use.
-
-Todo Enhancmeents in the next version:
- No batched generation (right-padding for causal LMs).
- No beam search.
- No min_p sampling (modern alternative to top-p).
- No logit bias hook (useful for grammar-constrained decoding).
- No gradient checkpointing (essential for >1B-param training).
- No streaming generation (token-by-token yield).
- No return of log-probabilities / scores.
- No length-extended RoPE (NTK-aware, YaRN-style) for long-context extrapolation.
- No __all__ export list → from llm import * is dangerous.
- No logging module — uses print() everywhere.
- No attention-mask builder utility that unifies causal + padding + cached-position logic.
- No KVCache container class — raw List[Tuple[Tensor,Tensor]] is error-prone.
- No inference context manager (torch.inference_mode).
- No save_pretrained / from_pretrained HuggingFace-style API.
- No model.generate() method (must use TextGenerator).
-
 
 LICENSE: MIT (educational use)
 ================================================================================
@@ -55,26 +64,85 @@ LICENSE: MIT (educational use)
 # IMPORTS
 # ==============================================================================
 
+from __future__ import annotations
+
+import json
+import logging
 import math
 import os
-import time
-import json
 import pickle
 import random
+import re
+import time
 from collections import Counter
 from dataclasses import dataclass, field, asdict
-from typing import (
-    Optional, Tuple, List, Dict, Any, Union, Iterable, Callable
-)
 from pathlib import Path
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    Iterator,
+    List,
+    Optional,
+    Tuple,
+    Union,
+)
 
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.utils.data import Dataset, DataLoader
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import LambdaLR
+from torch.utils.data import DataLoader, Dataset
+
+
+# ==============================================================================
+# PUBLIC API & LOGGING
+# ==============================================================================
+
+__all__ = [
+    # Config
+    "LLMConfig",
+    # Tokenizer
+    "BPETokenizer",
+    # Normalization
+    "RMSNorm", "LayerNorm", "make_norm",
+    # RoPE
+    "precompute_rope_frequencies", "precompute_rope_frequencies_ntk",
+    "apply_rope", "rotate_half",
+    # Mask utilities
+    "build_attention_mask",
+    # KV cache
+    "KVCache",
+    # Attention / FFN / Block
+    "MultiHeadAttention", "FeedForward", "TransformerBlock",
+    # Model
+    "LLM",
+    # Generation
+    "TextGenerator",
+    # Data / Training
+    "TextDataset", "LLMTrainer",
+    # Extension heads
+    "ClassificationHead", "EmbeddingModel",
+    # Utilities
+    "set_seed",
+    # Entry point
+    "demo",
+]
+
+logger = logging.getLogger("hands_on_llm")
+if not logger.handlers:
+    _h = logging.StreamHandler()
+    _h.setFormatter(
+        logging.Formatter(
+            "[%(asctime)s] %(levelname)s %(name)s | %(message)s",
+            datefmt="%H:%M:%S",
+        )
+    )
+    logger.addHandler(_h)
+logger.setLevel(logging.INFO)
 
 
 # ==============================================================================
@@ -88,8 +156,8 @@ class LLMConfig:
 
     This dataclass centralises every knob that affects the model's shape,
     numerical behaviour, and memory footprint. It follows the design pattern
-    used by HuggingFace's `PretrainedConfig`, so you can serialize/deserialize
-    it directly with `asdict()` / `LLMConfig(**d)`.
+    used by HuggingFace's ``PretrainedConfig``, so you can serialize/deserialize
+    it directly with ``asdict()`` / ``LLMConfig(**d)``.
 
     Parameters
     ----------
@@ -97,49 +165,62 @@ class LLMConfig:
         Number of tokens in the tokenizer's vocabulary. Must match the
         tokenizer used at training/inference time.
     max_seq_len : int
-        Maximum context length (Ch. 3, "context size"). Positions beyond this
-        are truncated. RoPE can extrapolate somewhat, but learned positional
-        embeddings strictly require `pos < max_seq_len`.
+        Maximum context length ("context size"). Positions beyond
+        this are truncated. RoPE can extrapolate somewhat (especially with
+        NTK scaling), but learned positional embeddings strictly require
+        ``pos < max_seq_len``.
     hidden_size : int
-        Model dimension `d_model`. Every Transformer block preserves this size.
+        Model dimension ``d_model``. Every Transformer block preserves
+        this size.
     num_layers : int
         Number of stacked Transformer blocks (Ch. 3, "Transformer blocks").
     num_heads : int
-        Number of query heads. `hidden_size` must be divisible by this.
+        Number of query heads. ``hidden_size`` must be divisible by this.
     num_kv_heads : Optional[int]
-        Number of key/value heads for Grouped-Query Attention (Ch. 3). If None,
-        defaults to `num_heads` (i.e., standard Multi-Head Attention). If less
-        than `num_heads`, enables GQA, which shrinks the KV cache and speeds
-        up generation at a small quality cost.
+        Number of key/value heads for Grouped-Query Attention (Ch. 3).
+        If ``None``, defaults to ``num_heads`` (i.e., standard Multi-Head
+        Attention). If less than ``num_heads``, enables GQA, which shrinks
+        the KV cache and speeds up generation at a small quality cost.
     intermediate_size : Optional[int]
-        Hidden size of the feedforward network. If None, defaults to
-        `4 * hidden_size` for GELU/ReLU, or `8/3 * hidden_size` (rounded up to
-        a multiple of 64) for SwiGLU — matching the ratio used in Llama.
+        Hidden size of the feedforward network. If ``None``, defaults to
+        ``4 * hidden_size`` for GELU/ReLU, or ``8/3 * hidden_size``
+        (rounded up to a multiple of 64) for SwiGLU -- matching the ratio
+        used in Llama.
     dropout : float
         Dropout probability applied inside residual branches.
     attention_dropout : float
         Dropout on attention weights (usually 0.0 during inference).
     use_rope : bool
-        If True, use rotary positional embeddings (RoPE). If False, use
-        a learned absolute positional embedding table.
+        If True, use rotary positional embeddings (RoPE, Ch. 3). If False,
+        use a learned absolute positional embedding table.
     rope_theta : float
         RoPE base frequency. 10_000 is the original; Llama 3 uses 500_000.
+    rope_scaling_factor : float
+        NTK-by-parts scaling factor for length extrapolation. 1.0 = no
+        scaling. Use a value > 1 to extend context beyond ``max_seq_len``
+        without retraining.
     use_swiglu : bool
-        If True, use the SwiGLU feedforward (Ch. 3). If False, use GELU.
+        If True, use the SwiGLU feedforward . If False, use GELU.
     use_rms_norm : bool
-        If True, use RMSNorm (Ch. 3). If False, use LayerNorm.
+        If True, use RMSNorm . If False, use LayerNorm.
     tie_embeddings : bool
         If True, share weights between the token embedding and the LM head.
         This is standard for GPT-2 / Llama and reduces parameters.
     initializer_range : float
         Standard deviation for the normal initialization of linear weights.
+    gradient_checkpointing : bool
+        If True, enable gradient checkpointing in Transformer blocks.
+        Trades ~30% compute for ~3x memory savings. Use for large models
+        that would otherwise OOM.
 
     Notes
     -----
-    The defaults produce a *tiny* model (~a few million parameters) that can
-    be trained on CPU in minutes. For a real workload, scale `hidden_size`,
-    `num_layers`, and `num_heads` up by 10–50x and use a GPU.
+    The defaults produce a *tiny* model (~a few million parameters) that
+    can be trained on CPU in minutes. For a real workload, scale
+    ``hidden_size``, ``num_layers``, and ``num_heads`` up by 10-50x and
+    use a GPU.
     """
+
     # Vocabulary and sequence
     vocab_size: int = 1024
     max_seq_len: int = 256
@@ -158,6 +239,7 @@ class LLMConfig:
     # Architectural choices
     use_rope: bool = True
     rope_theta: float = 10_000.0
+    rope_scaling_factor: float = 1.0
     use_swiglu: bool = True
     use_rms_norm: bool = True
     tie_embeddings: bool = True
@@ -165,22 +247,21 @@ class LLMConfig:
     # Initialization
     initializer_range: float = 0.02
 
+    # Memory
+    gradient_checkpointing: bool = False
+
     def __post_init__(self) -> None:
         """Validate and fill in defaults after construction."""
-        # Default KV head count = full MHA
         if self.num_kv_heads is None:
             self.num_kv_heads = self.num_heads
 
-        # Default FFN size based on activation choice
         if self.intermediate_size is None:
             if self.use_swiglu:
-                # Llama-style ratio: 8/3 * d_model, rounded up to 64
                 raw = int(8 * self.hidden_size / 3)
                 self.intermediate_size = ((raw + 63) // 64) * 64
             else:
                 self.intermediate_size = 4 * self.hidden_size
 
-        # Sanity checks
         assert self.hidden_size % self.num_heads == 0, (
             f"hidden_size ({self.hidden_size}) must be divisible by "
             f"num_heads ({self.num_heads})"
@@ -189,10 +270,12 @@ class LLMConfig:
             f"num_heads ({self.num_heads}) must be divisible by "
             f"num_kv_heads ({self.num_kv_heads}) for GQA"
         )
+        assert self.max_seq_len > 0, "max_seq_len must be positive"
+        assert self.vocab_size > 0, "vocab_size must be positive"
 
     @property
     def head_dim(self) -> int:
-        """Per-head dimensionality `d_k = d_model / num_heads`."""
+        """Per-head dimensionality ``d_k = d_model / num_heads``."""
         return self.hidden_size // self.num_heads
 
     @property
@@ -206,8 +289,9 @@ class LLMConfig:
 
     @classmethod
     def from_dict(cls, d: Dict[str, Any]) -> "LLMConfig":
-        """Deserialize from a plain dict."""
-        return cls(**d)
+        """Deserialize from a plain dict, ignoring unknown keys."""
+        known = {f.name for f in cls.__dataclass_fields__.values()}
+        return cls(**{k: v for k, v in d.items() if k in known})
 
 
 # ==============================================================================
@@ -223,19 +307,25 @@ class BPETokenizer:
     merge the most frequent adjacent pair of symbols into a new token, until
     the desired vocabulary size is reached.
 
-    Production tokenizers (GPT-4's `tiktoken`, Llama's SentencePiece) are
+    Production tokenizers (GPT-4's ``tiktoken``, Llama's SentencePiece) are
     optimizations of this same idea with additional engineering (regex
     pre-splitting, byte fallback, whitespace markers, etc.). This
     implementation keeps the algorithm bare so you can *see* what is
     happening.
 
     Design decisions
-    -------------------------------------------
-    * **Byte-level**: works for any UTF-8 text without an `<UNK>` token.
-    * **Greedy merges in learned order**: when encoding, we apply merges in
-      the exact order they were learned — this is the canonical BPE rule.
-    * **Special tokens**: `<|endoftext|>`, `<|pad|>`, `<|user|>`,
-      `<|assistant|>` are reserved for chat templating (Ch. 6).
+    --------------------------------------------
+    Byte-level: works for any UTF-8 text without an ``<UNK>`` token.
+    Greedy merges in learned order**: when encoding, we apply merges in
+      the exact order they were learned -- this is the canonical BPE rule.
+    Special tokens: ``<|bos|>``, ``<|pad|>``, ``<|eos|>``,
+      ``<|unk|>`` are reserved for chat templating
+
+    .. versionchanged:: 1.1
+        ``encode(allow_special=True)`` now uses a regex-based splitter
+        instead of a NUL-byte sentinel. This fixes corruption of text
+        containing NUL bytes and mis-classification of bare-digit
+        substrings as special-token IDs.
 
     Parameters
     ----------
@@ -243,24 +333,22 @@ class BPETokenizer:
         Total vocabulary size target (including the 256 byte tokens and
         any special tokens).
     special_tokens : Optional[Dict[str, int]]
-        Optional mapping of special-token strings to their IDs. If None,
+        Optional mapping of special-token strings to their IDs. If ``None``,
         a sensible default chat set is used.
 
     Attributes
     ----------
     merges : Dict[Tuple[int, int], int]
-        Map from `(left_id, right_id)` to the newly created merged token ID.
+        Map from ``(left_id, right_id)`` to the newly created merged token ID.
     vocab : Dict[int, bytes]
         Map from token ID to its byte sequence.
     """
 
-    # Default special tokens — IDs 256..259, so they sit on top of the
-    # 0..255 raw byte tokens.
     DEFAULT_SPECIALS = {
-        "<|endoftext|>": 256,
+        "<|bos|>": 256,
         "<|pad|>": 257,
-        "<|user|>": 258,
-        "<|assistant|>": 259,
+        "<|eos|>": 258,
+        "<|unk|>": 259,
     }
 
     def __init__(
@@ -277,20 +365,32 @@ class BPETokenizer:
         # Vocabulary starts as the 256 byte values, then specials are added.
         self.vocab: Dict[int, bytes] = {i: bytes([i]) for i in range(256)}
         next_id = 256
-        for tok in self.special_tokens:
-            self.vocab[next_id] = tok.encode("utf-8")
+        for tok_str in self.special_tokens:
+            self.vocab[next_id] = tok_str.encode("utf-8")
             next_id += 1
 
         # Merges learned during `train`
         self.merges: Dict[Tuple[int, int], int] = {}
         self._trained: bool = False
+        self._special_pattern: Optional["re.Pattern"] = None
+
+    # ------------------------------------------------------------------ #
+    #  Special-token regex
+    # ------------------------------------------------------------------ #
+    def _compile_special_pattern(self) -> "re.Pattern":
+        """Compile a regex that matches any registered special token, longest first."""
+        if not self.special_tokens:
+            return re.compile(r"(?!)")  # never matches
+        sorted_specials = sorted(self.special_tokens, key=len, reverse=True)
+        escaped = [re.escape(s) for s in sorted_specials]
+        return re.compile("|".join(escaped))
 
     # ------------------------------------------------------------------ #
     #  Training
     # ------------------------------------------------------------------ #
     def train(self, text: str, verbose: bool = False) -> None:
         """
-        Learn BPE merges from `text` until `target_vocab_size` is reached.
+        Learn BPE merges from ``text`` until ``target_vocab_size`` is reached.
 
         Parameters
         ----------
@@ -298,25 +398,19 @@ class BPETokenizer:
             Training corpus. Should be reasonably large (>= 100KB) for
             meaningful merges.
         verbose : bool
-            If True, print progress every 100 merges.
+            If True, log progress every 100 merges.
         """
-        # Encode the raw text as a sequence of byte IDs (0..255).
         tokens: List[int] = list(text.encode("utf-8"))
 
-        # We stop when len(vocab) hits target — accounting for specials.
         while len(self.vocab) < self.target_vocab_size:
-            # Count adjacent pairs.
             counts: Counter = Counter(zip(tokens[:-1], tokens[1:]))
             if not counts:
                 break
 
-            # Most frequent pair.
             pair, freq = counts.most_common(1)[0]
             if freq < 2:
-                # No pair repeats; further merging is useless.
                 break
 
-            # Assign a new ID.
             new_id = len(self.vocab)
             self.merges[pair] = new_id
             self.vocab[new_id] = self.vocab[pair[0]] + self.vocab[pair[1]]
@@ -338,12 +432,13 @@ class BPETokenizer:
             tokens = new_tokens
 
             if verbose and (len(self.vocab) % 100 == 0):
-                print(
+                logger.info(
                     f"[BPE] vocab={len(self.vocab)} "
                     f"merged {pair} -> {new_id} (freq={freq})"
                 )
 
         self._trained = True
+        self._special_pattern = self._compile_special_pattern()
 
     # ------------------------------------------------------------------ #
     #  Encoding
@@ -352,13 +447,18 @@ class BPETokenizer:
         """
         Encode a string to a list of token IDs.
 
+        .. versionchanged:: 1.1
+            Uses an explicit regex split for special tokens instead of a
+            NUL-byte sentinel. Fixes corruption of text containing NUL
+            bytes and mis-classification of bare-digit substrings.
+
         Parameters
         ----------
         text : str
             Input string.
         allow_special : bool
             If True, occurrences of the registered special-token strings
-            (e.g., "<|user|>") are replaced with their reserved IDs before
+            (e.g., ``<|eos|>``) are replaced with their reserved IDs before
             BPE. If False, special-token substrings are treated as raw text
             (safer for arbitrary user input).
 
@@ -367,37 +467,31 @@ class BPETokenizer:
         List[int]
         """
         if not self._trained:
-            # Fall back to raw bytes — the tokenizer simply hasn't learned yet.
             return list(text.encode("utf-8"))
 
-        if allow_special:
-            # Simple greedy longest-match replacement of specials.
-            for sp_tok in sorted(self.special_tokens, key=len, reverse=True):
-                text = text.replace(sp_tok, f"\x00{self.special_tokens[sp_tok]}\x00")
-            parts = text.split("\x00")
-        else:
-            parts = [text]
+        if not allow_special or not self.special_tokens:
+            return self._bpe_encode(text)
+
+        # Compile lazily if state was loaded from disk.
+        if self._special_pattern is None:
+            self._special_pattern = self._compile_special_pattern()
 
         out: List[int] = []
-        for part in parts:
-            if part.isdigit() and not allow_special:
-                # (disabled path — kept for clarity)
-                out.extend(list(part.encode("utf-8")))
+        for piece in self._special_pattern.split(text):
+            if not piece:
                 continue
-            if allow_special and part.isdigit() and int(part) in self.specials_inv:
-                out.append(int(part))
-                continue
-            out.extend(self._bpe_encode(part))
+            if piece in self.special_tokens:
+                out.append(self.special_tokens[piece])
+            else:
+                out.extend(self._bpe_encode(piece))
         return out
 
     def _bpe_encode(self, text: str) -> List[int]:
         """Apply learned merges to a plain string (no specials)."""
         tokens: List[int] = list(text.encode("utf-8"))
 
-        # Repeatedly find the pair with the lowest merge priority.
         while len(tokens) >= 2:
             pairs = set(zip(tokens[:-1], tokens[1:]))
-            # Keep only pairs we actually learned to merge.
             candidates = [(self.merges[p], p) for p in pairs if p in self.merges]
             if not candidates:
                 break
@@ -440,7 +534,6 @@ class BPETokenizer:
                 continue
             chunks.append(self.vocab.get(i, b""))
         raw = b"".join(chunks)
-        # `errors="replace"` keeps things robust even mid-UTF8.
         return raw.decode("utf-8", errors="replace")
 
     # ------------------------------------------------------------------ #
@@ -460,7 +553,7 @@ class BPETokenizer:
 
     @classmethod
     def load(cls, path: Union[str, Path]) -> "BPETokenizer":
-        """Load a tokenizer previously saved with `.save()`."""
+        """Load a tokenizer previously saved with ``.save()``."""
         with open(path, "rb") as f:
             state = pickle.load(f)
         tok = cls(
@@ -470,6 +563,7 @@ class BPETokenizer:
         tok.vocab = state["vocab"]
         tok.merges = state["merges"]
         tok._trained = state["_trained"]
+        tok._special_pattern = tok._compile_special_pattern()
         return tok
 
     def __len__(self) -> int:
@@ -477,12 +571,20 @@ class BPETokenizer:
         return len(self.vocab)
 
     @property
+    def bos_id(self) -> int:
+        return self.special_tokens["<|bos|>"]
+
+    @property
     def pad_id(self) -> int:
         return self.special_tokens["<|pad|>"]
 
     @property
     def eos_id(self) -> int:
-        return self.special_tokens["<|endoftext|>"]
+        return self.special_tokens["<|eos|>"]
+
+    @property
+    def unk_id(self) -> int:
+        return self.special_tokens["<|unk|>"]
 
 
 # ==============================================================================
@@ -493,10 +595,11 @@ class RMSNorm(nn.Module):
     """
     Root Mean Square Layer Normalization (Ch. 3, "The Transformer Block").
 
-    Unlike LayerNorm, RMSNorm does **not** subtract the mean or apply a bias;
-    it only rescales by the root-mean-square of the activations:
+    Unlike LayerNorm, RMSNorm does **not** subtract the mean or apply a
+    bias; it only rescales by the root-mean-square of the activations:
 
-        y = x / sqrt(mean(x^2) + eps) * weight
+    .. math::
+        y = x \\cdot \\mathrm{rsqrt}(\\mathrm{mean}(x^2) + \\epsilon) \\cdot w
 
     This is cheaper to compute and has been shown to match LayerNorm quality
     in modern LLMs (Llama, Mistral, Gemma).
@@ -504,7 +607,7 @@ class RMSNorm(nn.Module):
     Parameters
     ----------
     dim : int
-        Size of the last dimension of `x`.
+        Size of the last dimension of ``x``.
     eps : float
         Numerical stabiliser inside the square root.
     """
@@ -526,7 +629,7 @@ class LayerNorm(nn.Module):
     """
     Standard LayerNorm, provided as a drop-in alternative to RMSNorm.
 
-    Pre-norm (Ch. 3) is the standard placement in modern LLMs. The `bias`
+    Pre-norm (Ch. 3) is the standard placement in modern LLMs. The ``bias``
     is included for compatibility with the original Transformer paper.
     """
 
@@ -544,7 +647,7 @@ class LayerNorm(nn.Module):
 
 
 def make_norm(dim: int, use_rms: bool) -> nn.Module:
-    """Factory: RMSNorm if `use_rms`, else LayerNorm."""
+    """Factory: ``RMSNorm`` if ``use_rms``, else ``LayerNorm``."""
     return RMSNorm(dim) if use_rms else LayerNorm(dim)
 
 
@@ -559,7 +662,7 @@ def precompute_rope_frequencies(
     device: Optional[torch.device] = None,
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     """
-    Precompute the cos/sin tables for RoPE (Ch. 3, "Positional Embeddings").
+    Precompute the cos/sin tables for RoPE ( "Positional Embeddings").
 
     RoPE encodes position by rotating the (even, odd) pairs of a query/key
     vector by an angle that grows with position. Rotations across many
@@ -573,30 +676,67 @@ def precompute_rope_frequencies(
         Number of positions to precompute.
     theta : float
         Base frequency. Larger values better preserve very long contexts.
+    device : Optional[torch.device]
+        Device on which to place the tables.
 
     Returns
     -------
     cos, sin : Tuple[torch.Tensor, torch.Tensor]
-        Each of shape `(max_seq_len, head_dim)`.
+        Each of shape ``(max_seq_len, head_dim)``.
     """
     assert head_dim % 2 == 0, "RoPE requires an even head_dim"
 
-    # inv_freq has shape (head_dim/2,)
     inv_freq = 1.0 / (theta ** (torch.arange(0, head_dim, 2, device=device).float() / head_dim))
-    positions = torch.arange(max_seq_len, device=device).float()  # (S,)
+    positions = torch.arange(max_seq_len, device=device).float()
 
-    # Outer product -> (S, head_dim/2)
     freqs = torch.outer(positions, inv_freq)
-
-    # Concatenate so we cover every dimension: (S, head_dim)
     emb = torch.cat([freqs, freqs], dim=-1)
     return emb.cos(), emb.sin()
 
 
+def precompute_rope_frequencies_ntk(
+    head_dim: int,
+    max_seq_len: int,
+    theta: float = 10_000.0,
+    scaling_factor: float = 1.0,
+    device: Optional[torch.device] = None,
+) -> Tuple[torch.Tensor, torch.Tensor]:
+    """
+    Precompute RoPE cos/sin with NTK-by-parts scaling.
+
+    .. versionadded:: 1.1
+
+    Multiplies the base ``theta`` by
+    ``scaling_factor ** (head_dim / (head_dim - 2))``, which stretches
+    high-frequency components less than low-frequency ones -- preserving
+    local structure while extending reach. This is one of the standard
+    techniques used by Llama-style models to extrapolate RoPE beyond the
+    trained context length.
+
+    Parameters
+    ----------
+    head_dim, max_seq_len, theta, device
+        Same as :func:`precompute_rope_frequencies`.
+    scaling_factor : float
+        Ratio of ``desired_context / trained_context``. 1.0 = no scaling.
+
+    Returns
+    -------
+    cos, sin : Tuple[torch.Tensor, torch.Tensor]
+        Each of shape ``(max_seq_len, head_dim)``.
+    """
+    assert head_dim % 2 == 0
+    assert head_dim > 2, "NTK scaling requires head_dim > 2"
+    if scaling_factor <= 1.0:
+        return precompute_rope_frequencies(head_dim, max_seq_len, theta, device)
+    effective_theta = theta * (scaling_factor ** (head_dim / (head_dim - 2)))
+    return precompute_rope_frequencies(head_dim, max_seq_len, effective_theta, device)
+
+
 def rotate_half(x: torch.Tensor) -> torch.Tensor:
     """
-    Rotate the second half of the last dimension to the front (with a sign
-    flip). Used inside `apply_rope`.
+    Rotate the second half of the last dimension to the front (with a
+    sign flip). Used inside :func:`apply_rope`.
     """
     half = x.shape[-1] // 2
     x1, x2 = x[..., :half], x[..., half:]
@@ -610,20 +750,19 @@ def apply_rope(
     sin: torch.Tensor,
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     """
-    Apply rotary position embeddings to `q` and `k`.
+    Apply rotary position embeddings to ``q`` and ``k``.
 
     Parameters
     ----------
     q, k : torch.Tensor
-        Shape `(B, num_heads, S, head_dim)`.
+        Shape ``(B, num_heads, S, head_dim)``.
     cos, sin : torch.Tensor
-        Shape `(S, head_dim)` — one row per position.
+        Shape ``(S, head_dim)`` -- one row per position.
 
     Returns
     -------
     q_rot, k_rot : same shapes as inputs.
     """
-    # Broadcast (S, head_dim) -> (1, 1, S, head_dim)
     cos = cos.unsqueeze(0).unsqueeze(0)
     sin = sin.unsqueeze(0).unsqueeze(0)
     q_rot = q * cos + rotate_half(q) * sin
@@ -632,34 +771,203 @@ def apply_rope(
 
 
 # ==============================================================================
-# SECTION 5: MULTI-HEAD ATTENTION
+# SECTION 5: ATTENTION MASK BUILDER
+# ==============================================================================
+
+def build_attention_mask(
+    query_length: int,
+    key_length: int,
+    past_len: int,
+    pad_mask: Optional[torch.Tensor],
+    device: torch.device,
+    dtype: torch.dtype,
+    batch_size: Optional[int] = None,
+) -> Optional[torch.Tensor]:
+    """
+    Build an additive float attention mask of shape ``(B, 1, S_q, S_kv)``
+    combining causal masking with optional padding.
+
+    .. versionadded:: 1.1
+
+    The mask is *additive*: ``0.0`` for attended positions and
+    ``-inf`` for masked positions. This is the format expected by
+    :func:`torch.nn.functional.scaled_dot_product_attention`.
+
+    The mask is *block-causal*: position ``i`` (in the current chunk of
+    length ``query_length``) may attend to key position ``j`` (in the
+    full key stream of length ``key_length = past_len + query_length``)
+    iff ``j <= past_len + i``. This correctly handles three cases:
+
+      1. **Pure prefill** (``past_len == 0, query_length > 1``):
+         standard lower-triangular causal mask.
+      2. **Pure decode** (``query_length == 1``): no mask needed (returned
+         as ``None`` so SDPA can take its fast path).
+      3. **Chunked decode** (``past_len > 0, query_length > 1``):
+         past is fully visible, current chunk is lower-triangular.
+
+    Padding mask (if provided) is *additively* combined with the causal
+    component. The ``pad_mask`` should cover the *full* key stream
+    (i.e., length ``key_length``), with ``1`` for valid tokens and
+    ``0`` for pad tokens.
+
+    Parameters
+    ----------
+    query_length : int
+        Number of query positions (``S_q``).
+    key_length : int
+        Total number of key positions (``S_kv = past_len + query_length``).
+    past_len : int
+        Number of cached past positions.
+    pad_mask : Optional[torch.Tensor]
+        ``(B, key_length)`` with 1=valid, 0=pad, or None.
+    device, dtype : torch.device, torch.dtype
+    batch_size : Optional[int]
+        Required when ``pad_mask`` is None but a causal-only mask is
+        being built.
+
+    Returns
+    -------
+    Optional[torch.Tensor]
+        ``(B, 1, S_q, S_kv)`` additive float mask, or ``None`` when no
+        mask is needed (single-token decode without padding).
+    """
+    if pad_mask is not None:
+        B = pad_mask.size(0)
+    elif batch_size is not None:
+        B = batch_size
+    else:
+        B = 1
+
+    need_causal = query_length > 1
+    need_pad = pad_mask is not None
+
+    if not need_causal and not need_pad:
+        return None
+
+    if need_causal:
+        i_idx = torch.arange(query_length, device=device).unsqueeze(1)  # (S_q, 1)
+        j_idx = torch.arange(key_length, device=device).unsqueeze(0)    # (1, S_kv)
+        allowed = j_idx <= (past_len + i_idx)                            # (S_q, S_kv)
+        causal = torch.where(allowed, 0.0, float("-inf")).to(dtype)
+        mask = causal[None, None, :, :].expand(B, 1, query_length, key_length)
+    else:
+        mask = torch.zeros(
+            (B, 1, query_length, key_length), device=device, dtype=dtype
+        )
+
+    if need_pad:
+        pad_additive = torch.where(
+            pad_mask.bool(), 0.0, float("-inf")
+        ).to(dtype)  # (B, S_kv)
+        mask = mask + pad_additive[:, None, None, :]
+
+    return mask
+
+
+# ==============================================================================
+# SECTION 6: KV CACHE CONTAINER
+# ==============================================================================
+
+class KVCache:
+    """
+    Per-layer KV cache container.
+
+    .. versionadded:: 1.1
+
+    Replaces the raw ``List[Tuple[Tensor, Tensor]]`` convention with a
+    typed container that:
+
+      * Enforces shape invariants per layer.
+      * Supports ``reset()``, ``detach()``, ``to(device)``.
+      * Is iterable / indexable, so it can be passed through the
+        transformer stack cleanly.
+
+    Attributes
+    ----------
+    caches : List[Optional[Tuple[Tensor, Tensor]]]
+        One ``(k, v)`` tuple per layer, or ``None`` for a fresh cache.
+    """
+
+    def __init__(self, num_layers: int) -> None:
+        self._caches: List[Optional[Tuple[torch.Tensor, torch.Tensor]]] = [None] * num_layers
+
+    def __len__(self) -> int:
+        """Number of cached *positions* (0 if no layer has been populated)."""
+        first = self._caches[0]
+        return 0 if first is None else first[0].shape[2]
+
+    def __getitem__(self, i: int) -> Optional[Tuple[torch.Tensor, torch.Tensor]]:
+        return self._caches[i]
+
+    def __setitem__(self, i: int, val: Optional[Tuple[torch.Tensor, torch.Tensor]]) -> None:
+        self._caches[i] = val
+
+    def __iter__(self) -> Iterator[Optional[Tuple[torch.Tensor, torch.Tensor]]]:
+        return iter(self._caches)
+
+    def reset(self) -> None:
+        """Drop all cached keys/values."""
+        self._caches = [None] * len(self._caches)
+
+    def to(self, device: torch.device) -> "KVCache":
+        """Move all cached tensors to ``device``."""
+        for i, c in enumerate(self._caches):
+            if c is not None:
+                self._caches[i] = (c[0].to(device), c[1].to(device))
+        return self
+
+    def detach(self) -> "KVCache":
+        """Return a new cache with all tensors detached (no grad history)."""
+        new = KVCache(len(self._caches))
+        for i, c in enumerate(self._caches):
+            if c is not None:
+                new._caches[i] = (c[0].detach(), c[1].detach())
+        return new
+
+    @property
+    def is_empty(self) -> bool:
+        return len(self) == 0
+
+
+# ==============================================================================
+# SECTION 7: MULTI-HEAD ATTENTION  (Chapter 3)
 # ==============================================================================
 
 class MultiHeadAttention(nn.Module):
     """
     Causal multi-head self-attention with optional Grouped-Query Attention
-    (GQA) and KV-cache support (Ch. 3, "Inside the Transformer Block").
+    (GQA) and KV-cache support .
 
     The forward pass implements the two conceptual steps of attention
-    (Ch. 3, "Attention is all you need"):
+     "Attention is all you need"):
 
-        1. **Relevance scoring** — `softmax(Q K^T / sqrt(d_k))`
-        2. **Information combining** — weighted sum over values.
+        1. **Relevance scoring** -- ``softmax(Q K^T / sqrt(d_k))``
+        2. **Information combining** -- weighted sum over values.
 
     Enhancements
     ------------
     * **RoPE** applied to Q and K just before scoring (matches Llama).
-    * **GQA** via `repeat_interleave` of K/V heads.
-    * **KV cache** — the returned `(new_k, new_v)` should be fed back in on
-      the next generation step to avoid re-computing past tokens.
-    * **SDPA** — PyTorch's `scaled_dot_product_attention` is used, which
-      transparently picks Flash-Attention / Memory-Efficient backends on
-      supported GPUs (Ch. 3, "Flash Attention").
+    * **GQA** via ``repeat_interleave`` of K/V heads.
+    * **KV cache** -- the returned per-layer cache should be fed back in
+      on the next generation step to avoid re-computing past tokens.
+    * **SDPA** -- PyTorch's ``scaled_dot_product_attention`` is used,
+      which transparently picks Flash-Attention / Memory-Efficient
+      backends on supported GPUs ) "Flash Attention").
+
+    .. versionchanged:: 1.1
+        The causal-mask logic has been rewritten to correctly handle
+        the *chunked decode* case (``S > 1`` with a non-empty KV cache).
+        Previously, multi-token decode steps would silently skip the
+        causal mask, leaking future tokens. The new logic uses
+        :func:`build_attention_mask` to construct a block-causal mask in
+        all cases. The fp16-to-fp32 up-cast (which disabled
+        FlashAttention kernels) has also been removed; SDPA handles
+        mixed precision natively.
 
     Parameters
     ----------
     config : LLMConfig
-        Supplies `hidden_size`, `num_heads`, `num_kv_heads`, `dropout`.
+        Supplies ``hidden_size``, ``num_heads``, ``num_kv_heads``, ``dropout``.
     """
 
     def __init__(self, config: LLMConfig) -> None:
@@ -671,27 +979,17 @@ class MultiHeadAttention(nn.Module):
         self.head_dim = config.head_dim
         self.num_kv_groups = config.num_kv_groups
 
-        # Query projection covers all query heads.
         self.q_proj = nn.Linear(
-            self.hidden_size,
-            self.num_heads * self.head_dim,
-            bias=False,
+            self.hidden_size, self.num_heads * self.head_dim, bias=False
         )
-        # Key/Value projections only cover KV heads (GQA).
         self.k_proj = nn.Linear(
-            self.hidden_size,
-            self.num_kv_heads * self.head_dim,
-            bias=False,
+            self.hidden_size, self.num_kv_heads * self.head_dim, bias=False
         )
         self.v_proj = nn.Linear(
-            self.hidden_size,
-            self.num_kv_heads * self.head_dim,
-            bias=False,
+            self.hidden_size, self.num_kv_heads * self.head_dim, bias=False
         )
         self.o_proj = nn.Linear(
-            self.num_heads * self.head_dim,
-            self.hidden_size,
-            bias=False,
+            self.num_heads * self.head_dim, self.hidden_size, bias=False
         )
 
         self.attn_dropout = config.attention_dropout
@@ -710,47 +1008,46 @@ class MultiHeadAttention(nn.Module):
         Parameters
         ----------
         x : torch.Tensor
-            Shape `(B, S, hidden_size)`.
+            Shape ``(B, S, hidden_size)``.
         cos, sin : Optional[torch.Tensor]
-            RoPE tables of shape `(S_total, head_dim)`. `S_total` must cover
-            past cached positions + current `S`. If None, RoPE is skipped
-            (only valid when `config.use_rope` is False, or for a
-            positional-embedding variant of the model).
+            RoPE tables of shape ``(S_total, head_dim)``. ``S_total`` must
+            cover past cached positions + current ``S``. If None, RoPE is
+            skipped (only valid when ``config.use_rope`` is False).
         kv_cache : Optional[Tuple[Tensor, Tensor]]
-            Past keys and values of shape `(B, num_kv_heads, S_past, head_dim)`.
+            Past keys and values of shape
+            ``(B, num_kv_heads, S_past, head_dim)``.
         attention_mask : Optional[torch.Tensor]
-            Additive float mask of shape `(B, 1, S_q, S_kv)`. Use for padding.
-            Causal masking is applied automatically and is NOT to be included
-            here.
+            **Additive** float mask of shape ``(B, 1, S_q, S_kv)`` (as
+            produced by :func:`build_attention_mask`). Use for padding +
+            causal control. ``None`` lets SDPA pick its fast path
+            (``is_causal=True`` when ``S > 1`` and no cache).
 
         Returns
         -------
         out : torch.Tensor
-            `(B, S, hidden_size)`.
+            ``(B, S, hidden_size)``.
         new_kv_cache : Tuple[Tensor, Tensor]
-            Updated cache — pass this back on the next step.
+            Updated cache -- pass this back on the next step.
         """
         B, S, _ = x.shape
         S_past = 0 if kv_cache is None else kv_cache[0].shape[2]
 
-        # ---- 1. Project Q, K, V ---------------------------------------------
-        q = self.q_proj(x)  # (B, S, H*D)
-        k = self.k_proj(x)  # (B, S, H_kv*D)
-        v = self.v_proj(x)  # (B, S, H_kv*D)
+        # ---- 1. Project Q, K, V -----------------------------------------
+        q = self.q_proj(x)
+        k = self.k_proj(x)
+        v = self.v_proj(x)
 
-        # Reshape to (B, heads, S, head_dim)
         q = q.view(B, S, self.num_heads, self.head_dim).transpose(1, 2)
         k = k.view(B, S, self.num_kv_heads, self.head_dim).transpose(1, 2)
         v = v.view(B, S, self.num_kv_heads, self.head_dim).transpose(1, 2)
 
-        # ---- 2. RoPE --------------------------------------------------------
+        # ---- 2. RoPE ----------------------------------------------------
         if cos is not None and sin is not None:
-            # Slice the RoPE table to the current positions.
-            cos_slice = cos[S_past : S_past + S]
-            sin_slice = sin[S_past : S_past + S]
+            cos_slice = cos[S_past: S_past + S]
+            sin_slice = sin[S_past: S_past + S]
             q, k = apply_rope(q, k, cos_slice, sin_slice)
 
-        # ---- 3. KV cache concat --------------------------------------------
+        # ---- 3. KV cache concat ----------------------------------------
         if kv_cache is not None:
             k_past, v_past = kv_cache
             k = torch.cat([k_past, k], dim=2)
@@ -759,75 +1056,53 @@ class MultiHeadAttention(nn.Module):
 
         S_kv = k.shape[2]
 
-        # ---- 4. GQA: repeat KV heads to match Q heads ----------------------
+        # ---- 4. GQA: repeat KV heads to match Q heads ------------------
         if self.num_kv_groups > 1:
-            # (B, H_kv, S_kv, D) -> (B, H_kv * groups, S_kv, D)
             k = k.repeat_interleave(self.num_kv_groups, dim=1)
             v = v.repeat_interleave(self.num_kv_groups, dim=1)
 
-        # ---- 5. Causal + optional padding mask -----------------------------
-        # If we are doing a single-step generation with cache, no causal mask
-        # is needed. Otherwise use `is_causal=True` and optionally add a mask.
-        use_causal = S > 1 and S == S_kv
-
-        # Combine user-provided mask with causal via additive float masks.
-        if attention_mask is not None or not use_causal:
-            # Build an explicit causal (and padding) mask.
-            if use_causal:
-                causal = torch.full(
-                    (S, S_kv), float("-inf"), device=x.device, dtype=x.dtype
-                )
-                causal = torch.triu(causal, diagonal=1)
-                attn_mask = causal[None, None, :, :].expand(B, 1, S, S_kv)
-            else:
-                attn_mask = torch.zeros(
-                    (B, 1, S, S_kv), device=x.device, dtype=x.dtype
-                )
-            if attention_mask is not None:
-                attn_mask = attn_mask + attention_mask
+        # ---- 5. SDPA -----------------------------------------------------
+        # If a pre-built additive mask is supplied, use it directly.
+        # Otherwise let SDPA take its `is_causal=True` fast path when
+        # appropriate (training prefill with no padding mask).
+        if attention_mask is not None:
+            attn_out = F.scaled_dot_product_attention(
+                q, k, v,
+                attn_mask=attention_mask,
+                dropout_p=self.attn_dropout if self.training else 0.0,
+                is_causal=False,
+            )
         else:
-            attn_mask = None  # SDPA handles causality itself.
+            # No mask supplied: pure prefill (no cache) -> causal.
+            # Pure decode (cache + S=1) -> no causal needed.
+            need_is_causal = (S > 1) and (S_past == 0)
+            attn_out = F.scaled_dot_product_attention(
+                q, k, v,
+                dropout_p=self.attn_dropout if self.training else 0.0,
+                is_causal=need_is_causal,
+            )
 
-        # ---- 6. Scaled dot-product attention -------------------------------
-        # Cast to float32 for stability under fp16; cast back after.
-        sdpa_dtype = q.dtype
-        q_sdpa = q.float() if sdpa_dtype == torch.float16 else q
-        k_sdpa = k.float() if sdpa_dtype == torch.float16 else k
-        v_sdpa = v.float() if sdpa_dtype == torch.float16 else v
-
-        attn_out = F.scaled_dot_product_attention(
-            q_sdpa,
-            k_sdpa,
-            v_sdpa,
-            attn_mask=attn_mask,
-            dropout_p=self.attn_dropout if self.training else 0.0,
-            is_causal=(attn_mask is None),  # only true when we didn't build one
-        )
-        if sdpa_dtype == torch.float16:
-            attn_out = attn_out.to(sdpa_dtype)
-
-        # ---- 7. Output projection -----------------------------------------
-        # (B, H, S, D) -> (B, S, H, D) -> (B, S, H*D)
+        # ---- 6. Output projection ---------------------------------------
         attn_out = attn_out.transpose(1, 2).contiguous().view(B, S, -1)
         out = self.resid_dropout(self.o_proj(attn_out))
         return out, new_kv_cache
 
 
 # ==============================================================================
-# SECTION 6: FEEDFORWARD NETWORK
-# ==============================================================================
+# SECTION 8: FEEDFORWARD NETWORK
+# ---# ==============================================================================
 
 class FeedForward(nn.Module):
     """
     Position-wise feedforward network (Ch. 3, "The feedforward neural
     network at a glance"). This is where the model stores the bulk of its
-    learned knowledge — recall the "The Shawshank → Redemption" example.
+    learned knowledge.
 
     Two variants are supported:
 
     * **GELU** (standard): ``Linear -> GELU -> Linear``.
     * **SwiGLU** (Llama-style): ``(SiLU(W1 x) * W3 x) -> W2``. SwiGLU uses
-      three matrices instead of two, which is why `intermediate_size` is
+      three matrices instead of two, which is why ``intermediate_size`` is
       scaled by 8/3 rather than 4.
     """
 
@@ -836,7 +1111,6 @@ class FeedForward(nn.Module):
         self.use_swiglu = config.use_swiglu
 
         if self.use_swiglu:
-            # Three projections for the gated variant.
             self.w1 = nn.Linear(config.hidden_size, config.intermediate_size, bias=False)
             self.w3 = nn.Linear(config.hidden_size, config.intermediate_size, bias=False)
             self.w2 = nn.Linear(config.intermediate_size, config.hidden_size, bias=False)
@@ -848,7 +1122,6 @@ class FeedForward(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         if self.use_swiglu:
-            # SwiGLU: gate * value
             gate = F.silu(self.w1(x))
             value = self.w3(x)
             return self.dropout(self.w2(gate * value))
@@ -857,7 +1130,7 @@ class FeedForward(nn.Module):
 
 
 # ==============================================================================
-# SECTION 7: TRANSFORMER BLOCK
+# SECTION 9: TRANSFORMER BLOCK  (Chapter 3)
 # ==============================================================================
 
 class TransformerBlock(nn.Module):
@@ -866,14 +1139,20 @@ class TransformerBlock(nn.Module):
 
     Structure (pre-norm, the modern default):
 
+    .. code-block::
+
         x = x + Attention(Norm(x))
         x = x + FeedForward(Norm(x))
 
-    Pre-norm (as opposed to the original post-norm) is more stable to train
-    and is what modern LLMs (Llama, Mistral, GPT-NeoX) use.
+    Pre-norm (as opposed to the original post-norm) is more stable to
+    train and is what modern LLMs (Llama, Mistral, GPT-NeoX) use.
 
     Residual connections around each sublayer are critical to let gradients
     flow through dozens of stacked blocks.
+
+    .. versionchanged:: 1.1
+        Added optional gradient checkpointing (``config.gradient_checkpointing``)
+        for memory-efficient training of larger models.
     """
 
     def __init__(self, config: LLMConfig) -> None:
@@ -882,6 +1161,7 @@ class TransformerBlock(nn.Module):
         self.attn = MultiHeadAttention(config)
         self.ffn_norm = make_norm(config.hidden_size, config.use_rms_norm)
         self.ffn = FeedForward(config)
+        self.gradient_checkpointing = config.gradient_checkpointing
 
     def forward(
         self,
@@ -891,22 +1171,36 @@ class TransformerBlock(nn.Module):
         kv_cache: Optional[Tuple[torch.Tensor, torch.Tensor]] = None,
         attention_mask: Optional[torch.Tensor] = None,
     ) -> Tuple[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
-        # --- Attention sub-layer ---
-        h = self.attn_norm(x)
-        h, new_kv_cache = self.attn(
-            h, cos=cos, sin=sin, kv_cache=kv_cache, attention_mask=attention_mask
-        )
-        x = x + h
+        def _inner(x_inner: torch.Tensor):
+            h = self.attn_norm(x_inner)
+            h, new_cache = self.attn(
+                h, cos=cos, sin=sin, kv_cache=kv_cache,
+                attention_mask=attention_mask,
+            )
+            x_out = x_inner + h
+            h2 = self.ffn_norm(x_out)
+            h2 = self.ffn(h2)
+            return x_out + h2, new_cache
 
-        # --- Feedforward sub-layer ---
-        h = self.ffn_norm(x)
-        h = self.ffn(h)
-        x = x + h
+        # Only checkpoint during training, with no KV cache (training never
+        # uses the cache anyway).
+        use_ckpt = (
+            self.gradient_checkpointing
+            and self.training
+            and kv_cache is None
+            and x.requires_grad
+        )
+        if use_ckpt:
+            x, new_kv_cache = torch.utils.checkpoint.checkpoint(
+                _inner, x, use_reentrant=False
+            )
+        else:
+            x, new_kv_cache = _inner(x)
         return x, new_kv_cache
 
 
 # ==============================================================================
-# SECTION 8: THE LLM
+# SECTION 10: THE LLM
 # ==============================================================================
 
 class LLM(nn.Module):
@@ -915,75 +1209,88 @@ class LLM(nn.Module):
 
     Architecture
     ------------
-        input_ids ─► TokenEmbed ─┐
-                                 ├─► [TransformerBlock] × N ─► Norm ─► LM Head ─► logits
-        positions ─► (RoPE) ─────┘
+    .. code-block::
 
-    Because this is an *autoregressive* model (Ch. 3, "The Inputs and
-    Outputs of a Trained Transformer LLM"), it predicts one token per
+        input_ids -> TokenEmbed -+
+                                  +-> [TransformerBlock] x N -> Norm -> LM Head -> logits
+        positions -> (RoPE) -----+
+
+    Because this is an *autoregressive* model, it predicts one token per
     position given all previous tokens, and generation proceeds token by
-    token — optionally accelerated by KV caching.
+    token -- optionally accelerated by KV caching.
+
+    .. versionchanged:: 1.1
+        * Added ``return_hidden=True`` flag for downstream heads
+          (classification / embedding) to skip the LM head.
+        * Added :meth:`save_pretrained` / :meth:`from_pretrained`
+          directory-based serialization.
+        * Added :meth:`generate` convenience method (requires
+          :meth:`attach_tokenizer`).
+        * The ``attention_mask`` argument now follows the HuggingFace
+          convention: a ``(B, S)`` tensor with 1=valid, 0=pad (previously
+          an additive float mask). Internally converted via
+          :func:`build_attention_mask`.
+        * RoPE tables are bounds-checked during long-context generation.
+        * Accepts a :class:`KVCache` instance in addition to raw lists.
 
     Parameters
     ----------
     config : LLMConfig
-
-    Attributes
-    ----------
-    embed_tokens : nn.Embedding
-        The token embedding table (Ch. 2). One row per vocabulary entry.
-    blocks : nn.ModuleList
-        Stacked Transformer blocks.
-    final_norm : nn.Module
-        Norm applied before the LM head.
-    lm_head : nn.Linear
-        Projects hidden states to vocabulary logits.
     """
 
     def __init__(self, config: LLMConfig) -> None:
         super().__init__()
         self.config = config
 
-        # ---- 1. Token embedding -------------------------------------------
+        # ---- 1. Token embedding -----------------------------------------
         self.embed_tokens = nn.Embedding(config.vocab_size, config.hidden_size)
         self.embed_dropout = nn.Dropout(config.dropout)
 
-        # ---- 2. Positional embedding (learned fallback) -------------------
+        # ---- 2. Positional embedding (learned fallback) -----------------
         if not config.use_rope:
             self.pos_embed = nn.Embedding(config.max_seq_len, config.hidden_size)
+            self.register_buffer("rope_cos", None, persistent=False)
+            self.register_buffer("rope_sin", None, persistent=False)
         else:
             self.pos_embed = None
-            # Precompute RoPE tables once; move to device lazily.
-            cos, sin = precompute_rope_frequencies(
+            cos, sin = precompute_rope_frequencies_ntk(
                 head_dim=config.head_dim,
                 max_seq_len=config.max_seq_len,
                 theta=config.rope_theta,
+                scaling_factor=config.rope_scaling_factor,
             )
             self.register_buffer("rope_cos", cos, persistent=False)
             self.register_buffer("rope_sin", sin, persistent=False)
 
-        # ---- 3. Transformer blocks ---------------------------------------
+        # ---- 3. Transformer blocks --------------------------------------
         self.blocks = nn.ModuleList(
             [TransformerBlock(config) for _ in range(config.num_layers)]
         )
 
-        # ---- 4. Final norm + LM head -------------------------------------
+        # ---- 4. Final norm + LM head ------------------------------------
         self.final_norm = make_norm(config.hidden_size, config.use_rms_norm)
         self.lm_head = nn.Linear(config.hidden_size, config.vocab_size, bias=False)
 
-        # ---- 5. Weight tying (GPT-2 / Llama) ------------------------------
+        # ---- 5. Weight tying (GPT-2 / Llama) ----------------------------
         if config.tie_embeddings:
             self.lm_head.weight = self.embed_tokens.weight
 
-        # ---- 6. Initialization -------------------------------------------
+        # ---- 6. Initialization ------------------------------------------
         self.apply(self._init_weights)
-
-        # A scaled init for residual output projections improves
-        # training stability (see GPT-2 paper).
         for name, p in self.named_parameters():
-            if name.endswith("o_proj.weight") or name.endswith("w2.weight") \
-                    or name.endswith("fc2.weight"):
-                nn.init.normal_(p, mean=0.0, std=config.initializer_range / math.sqrt(2 * config.num_layers))
+            if (
+                name.endswith("o_proj.weight")
+                or name.endswith("w2.weight")
+                or name.endswith("fc2.weight")
+            ):
+                nn.init.normal_(
+                    p, mean=0.0,
+                    std=config.initializer_range / math.sqrt(2 * config.num_layers),
+                )
+
+        # Tokenizer is attached lazily for `generate()`.
+        self._tokenizer: Optional[BPETokenizer] = None
+        self._generator: Optional["TextGenerator"] = None
 
     # ------------------------------------------------------------------ #
     #  Initialization
@@ -1003,67 +1310,141 @@ class LLM(nn.Module):
     def forward(
         self,
         input_ids: torch.Tensor,
-        kv_caches: Optional[List[Tuple[torch.Tensor, torch.Tensor]]] = None,
+        kv_caches: Optional[Union[KVCache, List[Optional[Tuple[torch.Tensor, torch.Tensor]]]]] = None,
         attention_mask: Optional[torch.Tensor] = None,
         return_kv_caches: bool = False,
-    ) -> Union[torch.Tensor, Tuple[torch.Tensor, List[Tuple[torch.Tensor, torch.Tensor]]]]:
+        return_hidden: bool = False,
+    ) -> Union[
+        torch.Tensor,
+        Tuple[torch.Tensor, KVCache],
+    ]:
         """
         Run a forward pass.
 
         Parameters
         ----------
         input_ids : torch.LongTensor
-            Shape `(B, S)`.
-        kv_caches : Optional[List[Tuple[Tensor, Tensor]]]
-            One `(k, v)` tuple per layer, or None for a fresh pass.
+            Shape ``(B, S)``.
+        kv_caches : Optional[Union[KVCache, List]]
+            One ``(k, v)`` tuple per layer (or a :class:`KVCache`),
+            or ``None`` for a fresh pass.
         attention_mask : Optional[torch.Tensor]
-            Additive float mask `(B, 1, S_q, S_kv)` for padding. Causal
-            masking is applied automatically inside attention.
+            ``(B, S)`` tensor with 1=valid, 0=pad (HuggingFace convention).
+            Internally converted to an additive causal+padding mask.
         return_kv_caches : bool
-            If True, also return the updated per-layer KV caches.
+            If True, also return the updated per-layer KV caches (as a
+            :class:`KVCache`).
+        return_hidden : bool
+            If True, return the final-norm hidden states (skipping the LM
+            head). Used by :class:`ClassificationHead` and
+            :class:`EmbeddingModel`.
 
         Returns
         -------
         logits : torch.Tensor
-            Shape `(B, S, vocab_size)`.
-        kv_caches : List[Tuple[Tensor, Tensor]]  (optional)
+            Shape ``(B, S, vocab_size)`` (or hidden states if
+            ``return_hidden=True``).
+        kv_caches : KVCache (optional)
         """
         B, S = input_ids.shape
         device = input_ids.device
 
-        # ---- 1. Token embeddings -----------------------------------------
-        x = self.embed_tokens(input_ids)  # (B, S, H)
+        # ---- 1. Token embeddings ----------------------------------------
+        x = self.embed_tokens(input_ids)
 
         # ---- 2. Positional embeddings (if not RoPE) ----------------------
         past_len = 0
-        if kv_caches is not None and kv_caches[0] is not None:
-            past_len = kv_caches[0][0].shape[2]
+        if kv_caches is not None:
+            # Support both KVCache and raw list.
+            first = kv_caches[0] if isinstance(kv_caches, (list, KVCache)) else None
+            # KVCache[0] may return None; check.
+            if first is not None:
+                past_len = first[0].shape[2]
 
         if self.pos_embed is not None:
+            total_len = past_len + S
+            if total_len > self.config.max_seq_len:
+                logger.warning(
+                    f"Position {total_len} exceeds max_seq_len "
+                    f"{self.config.max_seq_len}; learned positional "
+                    f"embedding will be truncated."
+                )
+                total_len = self.config.max_seq_len
             positions = torch.arange(
-                past_len, past_len + S, device=device, dtype=torch.long
+                past_len, total_len, device=device, dtype=torch.long
             )
             x = x + self.pos_embed(positions)[None, :, :]
 
         x = self.embed_dropout(x)
 
-        # ---- 3. RoPE table for this pass ---------------------------------
+        # ---- 3. RoPE table for this pass --------------------------------
         cos = sin = None
-        if self.pos_embed is None:
-            cos, sin = self.rope_cos, self.rope_sin
+        if self.pos_embed is None and self.rope_cos is not None:
+            total_len = past_len + S
+            if total_len > self.config.max_seq_len:
+                logger.warning(
+                    f"Position {total_len} exceeds max_seq_len "
+                    f"{self.config.max_seq_len}; relying on RoPE "
+                    f"extrapolation (scaling_factor="
+                    f"{self.config.rope_scaling_factor})."
+                )
+            cos = self.rope_cos
+            sin = self.rope_sin
 
-        # ---- 4. Transformer blocks ---------------------------------------
-        new_caches: List[Tuple[torch.Tensor, torch.Tensor]] = []
-        for i, block in enumerate(self.blocks):
-            layer_cache = None if kv_caches is None else kv_caches[i]
-            x, new_cache = block(
-                x, cos=cos, sin=sin, kv_cache=layer_cache, attention_mask=attention_mask
+        # ---- 4. Build additive attention mask ---------------------------
+        # Convert user-supplied (B, S) padding mask to (B, 1, S, S_kv)
+        # additive form using build_attention_mask.
+        if attention_mask is not None:
+            # Pad mask should cover the full key stream.
+            if past_len > 0:
+                past_ones = torch.ones(
+                    attention_mask.size(0), past_len,
+                    device=attention_mask.device, dtype=attention_mask.dtype,
+                )
+                full_pad_mask = torch.cat([past_ones, attention_mask], dim=1)
+            else:
+                full_pad_mask = attention_mask
+            additive_mask = build_attention_mask(
+                query_length=S,
+                key_length=past_len + S,
+                past_len=past_len,
+                pad_mask=full_pad_mask,
+                device=device,
+                dtype=x.dtype,
             )
-            new_caches.append(new_cache)
+        else:
+            # No padding mask: build causal-only mask (returns None for
+            # single-token decode, letting SDPA fast-path).
+            additive_mask = build_attention_mask(
+                query_length=S,
+                key_length=past_len + S,
+                past_len=past_len,
+                pad_mask=None,
+                device=device,
+                dtype=x.dtype,
+                batch_size=B,
+            )
 
-        # ---- 5. Final norm + LM head -------------------------------------
-        x = self.final_norm(x)
-        logits = self.lm_head(x)  # (B, S, V)
+        # ---- 5. Transformer blocks --------------------------------------
+        new_caches = KVCache(num_layers=len(self.blocks))
+        for i, block in enumerate(self.blocks):
+            layer_cache = None
+            if kv_caches is not None:
+                layer_cache = kv_caches[i]
+            x, new_cache = block(
+                x, cos=cos, sin=sin, kv_cache=layer_cache,
+                attention_mask=additive_mask,
+            )
+            new_caches[i] = new_cache
+
+        # ---- 6. Final norm + optional LM head --------------------------
+        hidden = self.final_norm(x)
+        if return_hidden:
+            if return_kv_caches:
+                return hidden, new_caches
+            return hidden
+
+        logits = self.lm_head(hidden)
 
         if return_kv_caches:
             return logits, new_caches
@@ -1087,9 +1468,9 @@ class LLM(nn.Module):
         """
         Build an AdamW optimizer with proper parameter grouping.
 
-        We apply weight decay only to matrices that participate in matrix
-        multiplication (Linear/Embedding weights) and skip it for norms and
-        biases — a standard practice from the nanoGPT / Llama recipes.
+        Weight decay is applied only to matrices that participate in
+        matrix multiplication (Linear/Embedding weights) and skipped for
+        norms and biases -- a standard practice from nanoGPT / Llama.
         """
         decay, no_decay = [], []
         for n, p in self.named_parameters():
@@ -1106,47 +1487,109 @@ class LLM(nn.Module):
         return AdamW(groups, lr=lr, betas=betas)
 
     # ------------------------------------------------------------------ #
+    #  Generation convenience
+    # ------------------------------------------------------------------ #
+    def attach_tokenizer(self, tokenizer: BPETokenizer) -> None:
+        """Attach a tokenizer so :meth:`generate` works."""
+        self._tokenizer = tokenizer
+        self._generator = None  # invalidate cached generator
+
+    def generate(self, prompt: str, **kwargs) -> str:
+        """
+        Thin wrapper around :class:`TextGenerator`.
+
+        Requires :meth:`attach_tokenizer` to have been called first.
+        """
+        if self._tokenizer is None:
+            raise RuntimeError(
+                "Call model.attach_tokenizer(tokenizer) before generate()."
+            )
+        if self._generator is None:
+            self._generator = TextGenerator(self, self._tokenizer)
+        return self._generator.generate(prompt, **kwargs)
+
+    # ------------------------------------------------------------------ #
     #  Persistence
     # ------------------------------------------------------------------ #
     def save_checkpoint(self, path: Union[str, Path]) -> None:
         """Save model weights + config in a single file."""
         torch.save(
-            {
-                "config": self.config.to_dict(),
-                "state_dict": self.state_dict(),
-            },
+            {"config": self.config.to_dict(), "state_dict": self.state_dict()},
             path,
         )
 
     @classmethod
     def load_checkpoint(cls, path: Union[str, Path]) -> "LLM":
-        """Reconstruct a model from a `.save_checkpoint()` file."""
+        """Reconstruct a model from a ``.save_checkpoint()`` file."""
         ckpt = torch.load(path, map_location="cpu", weights_only=False)
         cfg = LLMConfig.from_dict(ckpt["config"])
         model = cls(cfg)
         model.load_state_dict(ckpt["state_dict"])
         return model
 
+    def save_pretrained(self, directory: Union[str, Path]) -> None:
+        """
+        Persist model + config to a directory (HuggingFace-style).
+
+        Layout::
+
+            directory/
+                config.json
+                model.pt
+        """
+        d = Path(directory)
+        d.mkdir(parents=True, exist_ok=True)
+        (d / "config.json").write_text(
+            json.dumps(self.config.to_dict(), indent=2)
+        )
+        torch.save(self.state_dict(), d / "model.pt")
+
+    @classmethod
+    def from_pretrained(
+        cls, directory: Union[str, Path], map_location: str = "cpu"
+    ) -> "LLM":
+        """Load a directory previously saved with :meth:`save_pretrained`."""
+        d = Path(directory)
+        cfg = LLMConfig.from_dict(
+            json.loads((d / "config.json").read_text())
+        )
+        model = cls(cfg)
+        state = torch.load(d / "model.pt", map_location=map_location, weights_only=True)
+        model.load_state_dict(state)
+        return model
+
 
 # ==============================================================================
-# SECTION 9: SAMPLING & GENERATION
+# SECTION 11: SAMPLING & GENERATION
 # ==============================================================================
 
 class TextGenerator:
     """
     Handles autoregressive decoding with a suite of sampling strategies.
 
-    Implements every strategy  ("Choosing a Single Token
-    from the Probability Distribution") and "Controlling Model
+    Implements every strategy "Choosing a Single Token
+    from the Probability Distribution" and "Controlling Model
     Output":
 
-    * **Greedy** — argmax (temperature = 0)
-    * **Temperature scaling** — divides logits by T
-    * **Top-k filtering** — keep only the k highest-probability tokens
-    * **Top-p / nucleus sampling** — keep the smallest set whose cumulative
-      probability exceeds p
-    * **Repetition penalty** — downweights tokens already generated
-    * **KV cache** — avoids recomputing past states, ~4–5x faster
+    -Greedy -- argmax (temperature = 0)
+    -Temperature scaling -- divides logits by T
+    -Top-k filtering-- keep only the k highest-probability tokens
+    -Top-p / nucleus sampling -- keep the smallest set whose
+      cumulative probability exceeds p
+    -min-p sampling -- keep tokens whose probability is at least
+      ``min_p * max_prob`` (modern alternative to top-p, more robust on
+      long-tail distributions)
+    -Repetition penalty -- downweights tokens already generated
+    -KV cache- -- avoids recomputing past states, ~4-5x faster
+
+    .. versionchanged:: 1.1
+        * Added ``min_p`` sampling.
+        * Added logit clamping (``[-1e9, 1e9]``) for numerical stability.
+        * Repetition penalty is now functional (no in-place mutation)
+          using the canonical HF ``torch.where`` formulation.
+        * Added :meth:`generate_batch` for batched, left-padded
+          parallel generation.
+        * Added :meth:`stream_generate` for token-by-token streaming.
 
     Parameters
     ----------
@@ -1159,6 +1602,7 @@ class TextGenerator:
     def __init__(self, model: LLM, tokenizer: BPETokenizer) -> None:
         self.model = model
         self.tokenizer = tokenizer
+        self.device = next(model.parameters()).device
 
     # ------------------------------------------------------------------ #
     #  Filtering helpers
@@ -1170,26 +1614,31 @@ class TextGenerator:
         penalty: float,
     ) -> torch.Tensor:
         """
-        Downweight tokens that have already appeared. Positive logits are
-        divided by `penalty` and negative logits are multiplied — both
-        push repeated tokens toward lower probability.
+        Downweight tokens that have already appeared.
+
+        .. versionchanged:: 1.1
+            Now returns a *new* tensor (no in-place mutation) and uses
+            the canonical HF formulation: positive logits are divided
+            by ``penalty`` and non-positive logits are multiplied -- both
+            push repeated tokens toward lower probability.
         """
         if penalty == 1.0:
             return logits
-        for b in range(logits.shape[0]):
+        out = logits.clone()
+        B = out.shape[0]
+        for b in range(B):
             seen = torch.unique(generated_ids[b])
-            # Positive logits: divide; negative: multiply.
-            pos = logits[b, seen] > 0
-            logits[b, seen[pos]] /= penalty
-            logits[b, seen[~pos]] *= penalty
-        return logits
+            scores = out[b, seen]
+            out[b, seen] = torch.where(
+                scores > 0, scores / penalty, scores * penalty
+            )
+        return out
 
     @staticmethod
     def _top_k_filter(logits: torch.Tensor, k: int) -> torch.Tensor:
         """Keep only the top-k logits; others become -inf."""
         if k <= 0:
             return logits
-        # `topk` values, and threshold at the k-th largest.
         topk_vals, _ = torch.topk(logits, min(k, logits.size(-1)))
         cutoff = topk_vals[..., -1, None]
         return torch.where(logits < cutoff, float("-inf"), logits)
@@ -1204,11 +1653,29 @@ class TextGenerator:
         cumprobs = probs.cumsum(dim=-1)
         # Remove tokens once we've crossed p (keep the first crossing).
         mask = cumprobs - probs > p
-        sorted_logits[mask] = float("-inf")
-        # Scatter back to original order.
+        sorted_logits = sorted_logits.masked_fill(mask, float("-inf"))
         out = torch.empty_like(logits)
         out.scatter_(-1, sorted_idx, sorted_logits)
         return out
+
+    @staticmethod
+    def _min_p_filter(logits: torch.Tensor, p: float) -> torch.Tensor:
+        """
+        Remove tokens whose softmax probability is below ``p * max_prob``.
+
+        .. versionadded:: 1.1
+
+        ``min_p`` is dynamically adaptive: it scales with the model's
+        confidence, so high-confidence steps keep few tokens and
+        low-confidence steps keep more. Empirically outperforms top-p on
+        long-tail distributions.
+        """
+        if p <= 0.0:
+            return logits
+        probs = F.softmax(logits, dim=-1)
+        max_prob, _ = probs.max(dim=-1, keepdim=True)
+        keep = probs >= (p * max_prob)
+        return torch.where(keep, logits, torch.full_like(logits, float("-inf")))
 
     # ------------------------------------------------------------------ #
     #  Core step
@@ -1220,38 +1687,41 @@ class TextGenerator:
         temperature: float,
         top_k: int,
         top_p: float,
+        min_p: float,
         generated_ids: torch.Tensor,
         repetition_penalty: float,
         greedy: bool,
     ) -> torch.Tensor:
-        """
-        Given logits of shape `(B, V)`, produce a next-token ID per batch item.
-        """
-        logits = logits.float()
+        """Given logits of shape ``(B, V)``, produce a next-token ID per batch item."""
+        # Clamp for numerical stability before any softmax.
+        logits = logits.float().clamp(min=-1e9, max=1e9)
 
-        # 1. Repetition penalty
-        logits = self._apply_repetition_penalty(logits, generated_ids, repetition_penalty)
+        # 1. Repetition penalty.
+        logits = self._apply_repetition_penalty(
+            logits, generated_ids, repetition_penalty
+        )
 
-        # 2. Greedy shortcut
+        # 2. Greedy shortcut.
         if greedy or temperature == 0.0:
             return logits.argmax(dim=-1)
 
-        # 3. Temperature
+        # 3. Temperature.
         logits = logits / max(temperature, 1e-8)
 
-        # 4. Top-k then top-p
+        # 4. Top-k, top-p, min-p.
         logits = self._top_k_filter(logits, top_k)
         logits = self._top_p_filter(logits, top_p)
+        logits = self._min_p_filter(logits, min_p)
 
-        # 5. Sample
+        # 5. Sample.
         probs = F.softmax(logits, dim=-1)
-        # Guard against all -inf rows (fallback to uniform).
-        if torch.isnan(probs).any() or (probs.sum(-1) == 0).any():
-            probs = torch.ones_like(probs) / probs.size(-1)
+        invalid_rows = (probs.sum(-1) == 0) | torch.isnan(probs).any(-1)
+        if invalid_rows.any():
+            probs[invalid_rows] = 1.0 / probs.size(-1)
         return torch.multinomial(probs, num_samples=1).squeeze(-1)
 
     # ------------------------------------------------------------------ #
-    #  Public API
+    #  Single-prompt generation
     # ------------------------------------------------------------------ #
     @torch.no_grad()
     def generate(
@@ -1261,54 +1731,56 @@ class TextGenerator:
         temperature: float = 1.0,
         top_k: int = 0,
         top_p: float = 1.0,
+        min_p: float = 0.0,
         repetition_penalty: float = 1.0,
         do_sample: bool = True,
         use_cache: bool = True,
         stop_on_eos: bool = True,
-    ) -> str:
+        return_logprobs: bool = False,
+    ) -> Union[str, Tuple[str, List[float]]]:
         """
-        Generate text from a string prompt.
+        Generate text from a single string prompt.
 
         Parameters
         ----------
         prompt : str
         max_new_tokens : int
         temperature : float
-            0 → greedy. > 0 → stochastic.
+            0 -> greedy. > 0 -> stochastic.
         top_k : int
-            0 → disabled.
+            0 -> disabled.
         top_p : float
-            1.0 → disabled.
+            1.0 -> disabled.
+        min_p : float
+            0.0 -> disabled.
         repetition_penalty : float
-            1.0 → disabled; > 1 downweights repeated tokens.
+            1.0 -> disabled; > 1 downweights repeated tokens.
         do_sample : bool
             If False, greedy.
         use_cache : bool
-            Enable KV cache. Disabling it makes generation O(S^3) per step.
+            Enable KV cache. Disabling makes generation O(S^3) per step.
         stop_on_eos : bool
-            Stop once `<|endoftext|>` is produced.
+            Stop once ``<|eos|>`` is produced.
+        return_logprobs : bool
+            If True, also return per-step log-probabilities of the
+            chosen tokens.
 
         Returns
         -------
-        str
-            The full continuation 'including' the prompt.
+        str  or  (str, List[float])
         """
         self.model.eval()
-        device = next(self.model.parameters()).device
-
-        # Encode prompt.
         input_ids = self.tokenizer.encode(prompt, allow_special=True)
         if not input_ids:
             input_ids = [self.tokenizer.eos_id]
-        input_ids = torch.tensor([input_ids], device=device, dtype=torch.long)
-        prompt_len = input_ids.shape[1]
+        input_ids = torch.tensor([input_ids], device=self.device, dtype=torch.long)
 
         generated = input_ids
-        kv_caches: Optional[List[Tuple[torch.Tensor, torch.Tensor]]] = None
+        kv_caches: Optional[KVCache] = None
+        logprobs: List[float] = []
 
-        for step in range(max_new_tokens):
-            # Only feed the *new* token after the first pass when caching.
-            if use_cache and kv_caches is not None:
+        for _ in range(max_new_tokens):
+            if use_cache and kv_caches is not None and not kv_caches.is_empty:
                 model_in = generated[:, -1:]
             else:
                 model_in = generated
@@ -1322,63 +1794,257 @@ class TextGenerator:
             else:
                 logits = self.model(model_in)
 
-            next_logits = logits[:, -1, :]  # (B, V)
-
+            next_logits = logits[:, -1, :]  # (1, V)
             next_id = self._sample_next_token(
                 logits=next_logits,
                 temperature=temperature,
                 top_k=top_k,
                 top_p=top_p,
+                min_p=min_p,
                 generated_ids=generated,
                 repetition_penalty=repetition_penalty,
                 greedy=(not do_sample),
             )
 
+            if return_logprobs:
+                with torch.no_grad():
+                    probs = F.softmax(next_logits.float(), dim=-1)
+                    lp = torch.log(probs[0, next_id.item()].clamp_min(1e-12)).item()
+                    logprobs.append(lp)
+
             generated = torch.cat([generated, next_id.unsqueeze(1)], dim=1)
 
             if stop_on_eos and next_id.item() == self.tokenizer.eos_id:
                 break
-
-            # Safety: respect max_seq_len.
             if generated.shape[1] >= self.model.config.max_seq_len:
                 break
 
         text = self.tokenizer.decode(generated[0].tolist())
+        if return_logprobs:
+            return text, logprobs
         return text
+
+    # ------------------------------------------------------------------ #
+    #  Batched generation
+    # ------------------------------------------------------------------ #
+    def _left_pad(self, sequences: List[List[int]]) -> torch.Tensor:
+        """Pad to max length with ``pad_id`` on the LEFT (causal-LM convention)."""
+        max_len = max(len(s) for s in sequences)
+        padded = []
+        for s in sequences:
+            n_pad = max_len - len(s)
+            padded.append([self.tokenizer.pad_id] * n_pad + s)
+        return torch.tensor(padded, dtype=torch.long, device=self.device)
+
+    @torch.no_grad()
+    def generate_batch(
+        self,
+        prompts: List[str],
+        max_new_tokens: int = 64,
+        temperature: float = 1.0,
+        top_k: int = 0,
+        top_p: float = 1.0,
+        min_p: float = 0.0,
+        repetition_penalty: float = 1.0,
+        do_sample: bool = True,
+        stop_on_eos: bool = True,
+    ) -> List[str]:
+        """
+        Batched parallel generation.
+
+        .. versionadded:: 1.1
+
+        All prompts are processed in parallel. Uses **left padding** so
+        the final position of every sequence is a real token (otherwise
+        the LM head would predict from a pad embedding).
+
+        A per-batch ``finished`` flag tracks which sequences have emitted
+        EOS; finished sequences keep producing pad tokens until the rest
+        catch up.
+        """
+        self.model.eval()
+        sequences: List[List[int]] = []
+        for p in prompts:
+            ids = self.tokenizer.encode(p, allow_special=True)
+            if not ids:
+                ids = [self.tokenizer.eos_id]
+            sequences.append(ids)
+
+        input_ids = self._left_pad(sequences)
+        # (B, S) padding mask: 1 = real token, 0 = pad.
+        pad_mask = (input_ids != self.tokenizer.pad_id).long()
+        B = input_ids.size(0)
+        finished = torch.zeros(B, dtype=torch.bool, device=self.device)
+
+        kv_caches: Optional[KVCache] = None
+        step = 0
+
+        while step < max_new_tokens:
+            if kv_caches is None or kv_caches.is_empty:
+                # Prefill.
+                model_in = input_ids
+                mask_in = pad_mask
+            else:
+                # Decode: feed only the last token of each sequence.
+                model_in = input_ids[:, -1:]
+                # Decode-step mask: pad_mask now must cover past+current.
+                # New token is always "valid".
+                new_valid = torch.ones(B, 1, device=self.device, dtype=pad_mask.dtype)
+                pad_mask = torch.cat([pad_mask, new_valid], dim=1)
+                mask_in = pad_mask[:, -1:]  # only the current position's validity
+                # But we need the *full* mask covering past+current for the
+                # additive mask builder. LLM.forward extends the mask with
+                # past_ones automatically when past_len > 0, so passing the
+                # full pad_mask works. However, we only have current S=1
+                # query; the additive mask builder will use past_len from
+                # the cache. So pass the full pad_mask here.
+                mask_in = pad_mask  # (B, past_len + 1)
+
+            logits, kv_caches = self.model(
+                model_in,
+                kv_caches=kv_caches,
+                attention_mask=mask_in,
+                return_kv_caches=True,
+            )
+            next_logits = logits[:, -1, :]
+            next_id = self._sample_next_token(
+                logits=next_logits,
+                temperature=temperature,
+                top_k=top_k,
+                top_p=top_p,
+                min_p=min_p,
+                generated_ids=input_ids,
+                repetition_penalty=repetition_penalty,
+                greedy=(not do_sample),
+            )
+            # Force finished sequences to output pad.
+            next_id = torch.where(
+                finished, torch.full_like(next_id, self.tokenizer.pad_id), next_id
+            )
+            input_ids = torch.cat([input_ids, next_id.unsqueeze(1)], dim=1)
+
+            if stop_on_eos:
+                finished = finished | (next_id == self.tokenizer.eos_id)
+                if finished.all():
+                    break
+            if input_ids.size(1) >= self.model.config.max_seq_len:
+                break
+            step += 1
+
+        # Strip left padding and decode.
+        texts: List[str] = []
+        for row in input_ids:
+            real_mask = (row != self.tokenizer.pad_id)
+            first_real = real_mask.nonzero()
+            if len(first_real) > 0:
+                row = row[first_real[0].item():]
+            texts.append(self.tokenizer.decode(row.tolist()))
+        return texts
+
+    # ------------------------------------------------------------------ #
+    #  Streaming generation
+    # ------------------------------------------------------------------ #
+    @torch.no_grad()
+    def stream_generate(
+        self,
+        prompt: str,
+        max_new_tokens: int = 256,
+        temperature: float = 1.0,
+        top_k: int = 0,
+        top_p: float = 1.0,
+        min_p: float = 0.0,
+        repetition_penalty: float = 1.0,
+        do_sample: bool = True,
+        stop_on_eos: bool = True,
+    ) -> Iterator[str]:
+        """
+        Yield decoded tokens one at a time (prompt UIs).
+
+        .. versionadded:: 1.1
+
+        Usage::
+
+            for chunk in generator.stream_generate(prompt):
+                print(chunk, end="", flush=True)
+        """
+        self.model.eval()
+        input_ids = self.tokenizer.encode(prompt, allow_special=True)
+        if not input_ids:
+            input_ids = [self.tokenizer.eos_id]
+        input_ids = torch.tensor([input_ids], device=self.device, dtype=torch.long)
+
+        kv_caches: Optional[KVCache] = None
+        for _ in range(max_new_tokens):
+            if kv_caches is None or kv_caches.is_empty:
+                model_in = input_ids
+            else:
+                model_in = input_ids[:, -1:]
+
+            if kv_caches is None or kv_caches.is_empty:
+                logits, kv_caches = self.model(
+                    model_in, return_kv_caches=True
+                )
+            else:
+                logits, kv_caches = self.model(
+                    model_in, kv_caches=kv_caches, return_kv_caches=True
+                )
+
+            next_id = self._sample_next_token(
+                logits=logits[:, -1, :],
+                temperature=temperature,
+                top_k=top_k,
+                top_p=top_p,
+                min_p=min_p,
+                generated_ids=input_ids,
+                repetition_penalty=repetition_penalty,
+                greedy=(not do_sample),
+            )
+
+            if stop_on_eos and next_id.item() == self.tokenizer.eos_id:
+                yield "<|eos|>"
+                break
+
+            input_ids = torch.cat([input_ids, next_id.unsqueeze(1)], dim=1)
+            yield self.tokenizer.decode([next_id.item()])
+
+            if input_ids.shape[1] >= self.model.config.max_seq_len:
+                break
 
 
 # ==============================================================================
-# SECTION 10: DATASET
+# SECTION 12: DATASET   packing
 # ==============================================================================
 
 class TextDataset(Dataset):
     """
-    Sliding-window next-token-prediction dataset .
+    Sliding-window next-token-prediction dataset (Ch. 3, "packing").
 
-    Given a long corpus, we concatenate all token IDs into one stream, then
-    emit every contiguous window of length `seq_len + 1` (the extra token
-    is the target for the last position).
+    Given a long corpus, we concatenate all token IDs into one stream,
+    then emit every contiguous window of length ``seq_len + 1`` (the extra
+    token is the target for the last position).
 
     This is the standard approach for training language models and
-    corresponds to the "packing" technique  for efficiently
-    handling short documents.
+    corresponds to the "packing" technique discussed in Ch. 3 for
+    efficiently handling short documents.
 
     Parameters
     ----------
     token_ids : List[int]
     seq_len : int
         Context length per training example.
-    stride : int
-        Step between successive windows. `stride == seq_len` gives no
-        overlap; smaller values give overlap (more samples, some redundancy).
+    stride : Optional[int]
+        Step between successive windows. ``stride == seq_len`` gives no
+        overlap; smaller values give overlap (more samples, some
+        redundancy).
     """
 
-    def __init__(self, token_ids: List[int], seq_len: int, stride: Optional[int] = None) -> None:
+    def __init__(
+        self, token_ids: List[int], seq_len: int, stride: Optional[int] = None
+    ) -> None:
         self.data = torch.tensor(token_ids, dtype=torch.long)
         self.seq_len = seq_len
         self.stride = stride or seq_len
 
-        # Pre-compute valid starting indices.
         n = len(self.data)
         max_start = n - seq_len - 1
         if max_start < 0:
@@ -1392,31 +2058,42 @@ class TextDataset(Dataset):
 
     def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor]:
         s = self.starts[idx]
-        window = self.data[s : s + self.seq_len + 1]
+        window = self.data[s: s + self.seq_len + 1]
         return window[:-1], window[1:]
 
 
 # ==============================================================================
-# SECTION 11: TRAINER
+# SECTION 13: TRAINER
 # ==============================================================================
 
 class LLMTrainer:
     """
     Minimal but production-conscious training loop for a generative LLM.
 
+    Implements techniques :
 
-
-    * Next-token-prediction cross-entropy loss (the objective used in
+    - Next-token-prediction cross-entropy loss (the objective used in
       supervised fine-tuning).
-    * Gradient accumulation for a larger effective batch size.
-    * Cosine LR schedule with linear warmup (standard for LLM training).
-    * Gradient clipping.
-    * Mixed-precision (AMP) on CUDA.
-    * Periodic evaluation and checkpointing.
-    * Loss masking for padding (ignore_index on pad tokens).
+    -Gradient accumulation for a larger effective batch size.
+    - Cosine LR schedule with linear warmup (standard for LLM training).
+    = Gradient clipping.
+    = Mixed-precision (AMP) on CUDA: bf16 on Ampere+ (A100, H100),
+      fp16 on older CUDA GPUs, fp32 on CPU.
+    = Periodic evaluation and checkpointing.
+    = Loss masking for padding (``ignore_index`` on pad tokens).
 
-    For a full SFT / DPO pipeline, replace the loss with the
-    appropriate objective — the loop structure is the same.
+    .. versionchanged:: 1.1
+        - Replaced deprecated ``torch.cuda.amp.GradScaler`` with
+          ``torch.amp.GradScaler``.
+        - Replaced ``torch.autocast`` calls with ``torch.amp.autocast``.
+        - Default dtype is now bf16 on Ampere+ GPUs (more stable than fp16).
+        - Token throughput is now tracked precisely (was previously
+          computed via a confusing formula).
+        - Uses the :mod:`logging` module instead of ``print``.
+        - Saves the GradScaler state in checkpoints.
+
+    For a full SFT / DPO pipeline , replace the loss with the
+    appropriate objective -- the loop structure is the same.
     """
 
     def __init__(
@@ -1430,6 +2107,7 @@ class LLMTrainer:
         grad_accum_steps: int = 1,
         grad_clip: float = 1.0,
         use_amp: bool = True,
+        dtype: Optional[torch.dtype] = None,
         log_every: int = 10,
         eval_every: int = 100,
         save_every: int = 500,
@@ -1442,15 +2120,28 @@ class LLMTrainer:
         self.max_steps = max_steps
         self.grad_accum_steps = grad_accum_steps
         self.grad_clip = grad_clip
-        self.use_amp = use_amp and self.device.type == "cuda"
         self.log_every = log_every
         self.eval_every = eval_every
         self.save_every = save_every
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
+        # Choose AMP dtype automatically.
+        if dtype is None:
+            if self.device.type == "cuda":
+                major, _ = torch.cuda.get_device_capability()
+                dtype = torch.bfloat16 if major >= 8 else torch.float16
+            else:
+                dtype = torch.float32
+        self.amp_dtype = dtype
+        self.use_amp = (
+            use_amp and self.device.type == "cuda" and dtype != torch.float32
+        )
+
         # Optimizer.
-        self.optimizer = model.configure_optimizers(lr=lr, weight_decay=weight_decay)
+        self.optimizer = model.configure_optimizers(
+            lr=lr, weight_decay=weight_decay
+        )
 
         # LR schedule: linear warmup to `lr`, then cosine decay to 10% of lr.
         def lr_lambda(step: int) -> float:
@@ -1460,7 +2151,9 @@ class LLMTrainer:
             return max(0.1, 0.5 * (1.0 + math.cos(math.pi * progress)))
 
         self.scheduler = LambdaLR(self.optimizer, lr_lambda)
-        self.scaler = torch.cuda.amp.GradScaler(enabled=self.use_amp)
+
+        # Modern GradScaler (PyTorch 2.0+).
+        self.scaler = torch.amp.GradScaler(self.device.type, enabled=self.use_amp)
 
         self.step = 0
         self.best_eval_loss = float("inf")
@@ -1473,17 +2166,17 @@ class LLMTrainer:
         train_loader: DataLoader,
         eval_loader: Optional[DataLoader] = None,
     ) -> None:
-        """Run the training loop until `max_steps` is reached."""
+        """Run the training loop until ``max_steps`` is reached."""
         self.model.train()
         train_iter = iter(train_loader)
         running_loss = 0.0
-        running_steps = 0
+        running_tokens = 0
         t0 = time.time()
 
         while self.step < self.max_steps:
-            # --- Accumulate gradients -------------------------------------
             self.optimizer.zero_grad(set_to_none=True)
             accum_loss = 0.0
+            step_tokens = 0
 
             for _ in range(self.grad_accum_steps):
                 try:
@@ -1494,24 +2187,23 @@ class LLMTrainer:
 
                 x = x.to(self.device, non_blocking=True)
                 y = y.to(self.device, non_blocking=True)
+                step_tokens += x.numel()
 
-                with torch.autocast(
-                    device_type=self.device.type,
-                    dtype=torch.float16,
+                with torch.amp.autocast(
+                    self.device.type,
+                    dtype=self.amp_dtype,
                     enabled=self.use_amp,
                 ):
-                    logits = self.model(x)  # (B, S, V)
+                    logits = self.model(x)
                     loss = F.cross_entropy(
                         logits.view(-1, logits.size(-1)),
                         y.reshape(-1),
                         ignore_index=self.tokenizer.pad_id,
-                    )
-                    loss = loss / self.grad_accum_steps
+                    ) / self.grad_accum_steps
 
                 self.scaler.scale(loss).backward()
                 accum_loss += loss.item()
 
-            # --- Optimiser step -------------------------------------------
             self.scaler.unscale_(self.optimizer)
             torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.grad_clip)
             self.scaler.step(self.optimizer)
@@ -1520,39 +2212,32 @@ class LLMTrainer:
 
             self.step += 1
             running_loss += accum_loss
-            running_steps += 1
+            running_tokens += step_tokens
 
-            # --- Logging ---------------------------------------------------
+            # Logging.
             if self.step % self.log_every == 0:
-                avg = running_loss / running_steps
                 dt = time.time() - t0
-                tokens_per_s = (
-                    self.grad_accum_steps
-                    * x.size(0)
-                    * x.size(1)
-                    * running_steps
-                    / max(dt, 1e-6)
-                )
+                avg_loss = running_loss / self.log_every
                 lr = self.scheduler.get_last_lr()[0]
-                print(
-                    f"[step {self.step:>5}/{self.max_steps}] "
-                    f"loss={avg:.4f} lr={lr:.2e} "
-                    f"tok/s={tokens_per_s:,.0f}"
+                logger.info(
+                    f"step {self.step:>5}/{self.max_steps} "
+                    f"loss={avg_loss:.4f} lr={lr:.2e} "
+                    f"tok/s={running_tokens / max(dt, 1e-6):,.0f}"
                 )
                 running_loss = 0.0
-                running_steps = 0
+                running_tokens = 0
                 t0 = time.time()
 
-            # --- Evaluation -------------------------------------------------
+            # Evaluation.
             if eval_loader is not None and self.step % self.eval_every == 0:
                 eval_loss = self.evaluate(eval_loader)
-                print(f"[step {self.step:>5}] eval_loss={eval_loss:.4f}")
+                logger.info(f"step {self.step:>5} eval_loss={eval_loss:.4f}")
                 if eval_loss < self.best_eval_loss:
                     self.best_eval_loss = eval_loss
                     self.save("best.pt")
                 self.model.train()
 
-            # --- Checkpointing ---------------------------------------------
+            # Checkpointing.
             if self.step % self.save_every == 0:
                 self.save(f"step_{self.step}.pt")
 
@@ -1568,9 +2253,9 @@ class LLMTrainer:
         for x, y in loader:
             x = x.to(self.device, non_blocking=True)
             y = y.to(self.device, non_blocking=True)
-            with torch.autocast(
-                device_type=self.device.type,
-                dtype=torch.float16,
+            with torch.amp.autocast(
+                self.device.type,
+                dtype=self.amp_dtype,
                 enabled=self.use_amp,
             ):
                 logits = self.model(x)
@@ -1587,7 +2272,7 @@ class LLMTrainer:
     #  Checkpointing
     # ------------------------------------------------------------------ #
     def save(self, name: str) -> None:
-        """Save model + optimizer + scheduler + step."""
+        """Save model + optimizer + scheduler + scaler + step."""
         path = self.output_dir / name
         torch.save(
             {
@@ -1595,6 +2280,7 @@ class LLMTrainer:
                 "model": self.model.state_dict(),
                 "optimizer": self.optimizer.state_dict(),
                 "scheduler": self.scheduler.state_dict(),
+                "scaler": self.scaler.state_dict(),
                 "step": self.step,
                 "best_eval_loss": self.best_eval_loss,
             },
@@ -1603,17 +2289,196 @@ class LLMTrainer:
 
 
 # ==============================================================================
-# SECTION 12: DEMO — TRAIN A TINY MODEL END TO END
+# SECTION 14: CLASSIFICATION HEAD
 # ==============================================================================
 
-def set_seed(seed: int = 42) -> None:
-    """Seed Python, NumPy, and PyTorch for reproducibility."""
+def _pool_hidden(
+    hidden: torch.Tensor,
+    attention_mask: torch.Tensor,
+    pooling: str,
+) -> torch.Tensor:
+    """
+    Pool hidden states along the sequence dimension.
+
+    Parameters
+    ----------
+    hidden : torch.Tensor
+        ``(B, S, H)`` -- pre-LM-head hidden states.
+    attention_mask : torch.Tensor
+        ``(B, S)`` with 1=valid, 0=pad.
+    pooling : {"cls", "mean", "max"}
+        * ``cls``  -- last non-pad token (acts as a CLS for causal LMs).
+        * ``mean`` -- mean of non-pad tokens.
+        * ``max``  -- max-pool over non-pad tokens.
+    """
+    if pooling == "cls":
+        # For causal LMs, "last non-pad token" mirrors BERT's [CLS].
+        lengths = attention_mask.sum(dim=1) - 1
+        idx = lengths.clamp(min=0)
+        return hidden[torch.arange(hidden.size(0), device=hidden.device), idx]
+    mask = attention_mask.unsqueeze(-1).float()  # (B, S, 1)
+    if pooling == "mean":
+        summed = (hidden * mask).sum(dim=1)
+        counts = mask.sum(dim=1).clamp(min=1.0)
+        return summed / counts
+    if pooling == "max":
+        neg_inf = torch.finfo(hidden.dtype).min
+        masked = hidden.masked_fill(~attention_mask.bool().unsqueeze(-1), neg_inf)
+        return masked.max(dim=1).values
+    raise ValueError(f"Unknown pooling: {pooling}")
+
+
+class ClassificationHead(nn.Module):
+    """
+    Classification head for text classification .
+
+    .. versionchanged:: 1.1
+        This is now a *real* implementation that runs the full backbone
+        (previously a stub that only used the embedding layer). Supports
+        three pooling strategies, optional backbone freezing, and a
+        dropout before the classifier.
+
+    The backbone acts as an encoder of contextualised embeddings; the
+    pooled representation feeds a linear classifier. This matches the
+    "task-specific model" architecture illustrated in Ch. 4, Figure 4-3.
+
+    Parameters
+    ----------
+    backbone : LLM
+    num_labels : int
+    pooling : {"cls", "mean", "max"}
+        - ``cls``  -- last-token pooling (good for causal LMs).
+        - ``mean`` -- mean of non-pad tokens.
+        - ``max``  -- max-pool over non-pad tokens.
+    dropout : float
+    freeze_backbone : bool
+        If True, backbone params are not updated; only the classifier is
+        fine-tuned (Ch. 11, "feature-extraction" approach).
+    """
+
+    POOLINGS = ("cls", "mean", "max")
+
+    def __init__(
+        self,
+        backbone: LLM,
+        num_labels: int,
+        pooling: str = "mean",
+        dropout: float = 0.1,
+        freeze_backbone: bool = False,
+    ) -> None:
+        super().__init__()
+        assert pooling in self.POOLINGS, f"pooling must be one of {self.POOLINGS}"
+        self.backbone = backbone
+        self.pooling = pooling
+        self.dropout = nn.Dropout(dropout)
+        self.classifier = nn.Linear(backbone.config.hidden_size, num_labels)
+        if freeze_backbone:
+            for p in self.backbone.parameters():
+                p.requires_grad = False
+        nn.init.normal_(self.classifier.weight, std=0.02)
+        nn.init.zeros_(self.classifier.bias)
+
+    def forward(
+        self,
+        input_ids: torch.Tensor,
+        attention_mask: Optional[torch.Tensor] = None,
+    ) -> torch.Tensor:
+        if attention_mask is None:
+            attention_mask = torch.ones_like(input_ids)
+        hidden = self.backbone(
+            input_ids, attention_mask=attention_mask, return_hidden=True
+        )
+        pooled = self.dropout(_pool_hidden(hidden, attention_mask, self.pooling))
+        return self.classifier(pooled)
+
+
+# ==============================================================================
+# SECTION 15: EMBEDDING MODEL
+# ==============================================================================
+
+class EmbeddingModel(nn.Module):
+    """
+    Text-embedding model .
+
+    .. versionchanged:: 1.1
+        Now runs the full backbone (previously a stub). Produces
+        mean-pooled, L2-normalised embeddings suitable for cosine
+        similarity / contrastive losses.
+
+    Usage with a contrastive loss (e.g., InfoNCE)::
+
+        emb = EmbeddingModel(backbone)
+        anchor   = emb(input_ids_a, attention_mask_a)
+        positive = emb(input_ids_b, attention_mask_b)
+        # In-batch negatives:
+        sim = F.cosine_similarity(anchor.unsqueeze(1), positive.unsqueeze(0), dim=-1)
+        sim = sim / temperature
+        loss = F.cross_entropy(sim, torch.arange(B))
+
+
+    """
+
+    def __init__(
+        self,
+        backbone: LLM,
+        pooling: str = "mean",
+        dropout: float = 0.1,
+    ) -> None:
+        super().__init__()
+        self.backbone = backbone
+        self.pooling = pooling
+        self.dropout = nn.Dropout(dropout)
+
+    def forward(
+        self,
+        input_ids: torch.Tensor,
+        attention_mask: Optional[torch.Tensor] = None,
+    ) -> torch.Tensor:
+        if attention_mask is None:
+            attention_mask = torch.ones_like(input_ids)
+        hidden = self.backbone(
+            input_ids, attention_mask=attention_mask, return_hidden=True
+        )
+        pooled = self.dropout(_pool_hidden(hidden, attention_mask, self.pooling))
+        return F.normalize(pooled, p=2, dim=-1)
+
+
+# ==============================================================================
+# SECTION 16: REPRODUCIBILITY
+# ==============================================================================
+
+def set_seed(seed: int = 42, deterministic: bool = False) -> None:
+    """
+    Seed Python, NumPy, and PyTorch for reproducibility.
+
+    .. versionchanged:: 1.1
+        Added ``deterministic`` flag that, when True, forces cuDNN to
+        deterministic algorithms and enables
+        ``torch.use_deterministic_algorithms``.
+
+    Parameters
+    ----------
+    seed : int
+    deterministic : bool
+        If True, force fully deterministic algorithms (slower but
+        reproducible). Default False (typical for training).
+    """
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed_all(seed)
+    torch.cuda.manual_seed_all(seed)
+    if deterministic:
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+        try:
+            torch.use_deterministic_algorithms(True)
+        except Exception:
+            pass  # older PyTorch
 
+
+# ==============================================================================
+# SECTION 17: DEMO -- TRAIN A TINY MODEL END TO END
+# ==============================================================================
 
 def demo() -> None:
     """
@@ -1624,18 +2489,20 @@ def demo() -> None:
         3. Train it with next-token prediction.
         4. Generate with different sampling strategies.
         5. Verify that KV-cached generation matches non-cached generation.
+        6. Demonstrate batched generation.
+        7. Demonstrate streaming generation.
+        8. Demonstrate save_pretrained / from_pretrained round-trip.
     """
-    print("=" * 78)
-    print("HANDS-ON LARGE LANGUAGE MODELS — end-to-end demo")
-    print("=" * 78)
+    sep = "=" * 78
+    logger.info(sep)
+    logger.info("HANDS-ON LARGE LANGUAGE MODELS -- end-to-end demo (v1.1)")
+    logger.info(sep)
 
     set_seed(42)
 
     # ------------------------------------------------------------------
     # 1. Corpus
     # ------------------------------------------------------------------
-    # A small, repetitive corpus so a tiny model can learn structure in a
-    # couple of minutes on CPU. Replace with your own text for real work.
     corpus = (
         "the quick brown fox jumps over the lazy dog. "
         "the lazy dog sleeps all day. "
@@ -1647,51 +2514,64 @@ def demo() -> None:
         "the quick fox jumps high. "
         "the lazy dog sleeps well. "
         "the fox runs fast and the dog runs slow. "
-    ) * 60  # ~ few thousand tokens
+    ) * 60
 
-    print(f"\nCorpus: {len(corpus):,} characters")
+    logger.info(f"Corpus: {len(corpus):,} characters")
 
     # ------------------------------------------------------------------
     # 2. Tokenizer
     # ------------------------------------------------------------------
-    print("\n[1/5] Training BPE tokenizer ...")
+    logger.info("[1/8] Training BPE tokenizer ...")
     tokenizer = BPETokenizer(vocab_size=512)
     tokenizer.train(corpus)
-    print(f"    vocabulary size: {len(tokenizer)}")
+    logger.info(f"    vocabulary size: {len(tokenizer)}")
 
     encoded = tokenizer.encode(corpus, allow_special=False)
-    print(f"    corpus -> {len(encoded):,} tokens "
-          f"({len(encoded)/len(corpus):.3f} tokens/char)")
+    logger.info(
+        f"    corpus -> {len(encoded):,} tokens "
+        f"({len(encoded) / len(corpus):.3f} tokens/char)"
+    )
 
-    # Quick round-trip sanity check.
+    # Round-trip sanity check.
     assert tokenizer.decode(encoded) == corpus, "Tokenizer round-trip failed!"
+
+    # Save tokenizer.
+    ckpt_dir = Path("./demo_checkpoints")
+    ckpt_dir.mkdir(parents=True, exist_ok=True)
+    tokenizer_path = ckpt_dir / "tokenizer.pkl"
+    tokenizer.save(tokenizer_path)
+    logger.info(f"    saved tokenizer to {tokenizer_path}")
 
     # ------------------------------------------------------------------
     # 3. Model
     # ------------------------------------------------------------------
-    print("\n[2/5] Building LLM ...")
+    logger.info("[2/8] Building LLM ...")
     config = LLMConfig(
         vocab_size=len(tokenizer),
         max_seq_len=64,
         hidden_size=128,
         num_layers=4,
         num_heads=4,
-        num_kv_heads=2,     # GQA enabled
+        num_kv_heads=2,
         dropout=0.1,
         use_rope=True,
+        rope_theta=10_000.0,
+        rope_scaling_factor=1.0,
         use_swiglu=True,
         use_rms_norm=True,
         tie_embeddings=True,
+        gradient_checkpointing=False,
     )
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = LLM(config).to(device)
-    print(f"    device: {device}")
-    print(f"    parameters: {model.num_parameters():,}")
+    model.attach_tokenizer(tokenizer)
+    logger.info(f"    device: {device}")
+    logger.info(f"    parameters: {model.num_parameters():,}")
 
     # ------------------------------------------------------------------
     # 4. Train
     # ------------------------------------------------------------------
-    print("\n[3/5] Training ...")
+    logger.info("[3/8] Training ...")
     split = int(len(encoded) * 0.9)
     train_ids, val_ids = encoded[:split], encoded[split:]
 
@@ -1711,14 +2591,14 @@ def demo() -> None:
         log_every=20,
         eval_every=100,
         save_every=100,
-        output_dir="./demo_checkpoints",
+        output_dir=str(ckpt_dir),
     )
     trainer.train(train_loader, eval_loader=val_loader)
 
     # ------------------------------------------------------------------
-    # 5. Generate
+    # 5. Generate (single-prompt)
     # ------------------------------------------------------------------
-    print("\n[4/5] Generating text with different sampling strategies ...")
+    logger.info("[4/8] Generating text with different sampling strategies ...")
     generator = TextGenerator(model, tokenizer)
 
     prompts = [
@@ -1732,10 +2612,11 @@ def demo() -> None:
         ("temp=0.7",      dict(do_sample=True, temperature=0.7, top_k=40)),
         ("temp=1.0+k40",  dict(do_sample=True, temperature=1.0, top_k=40)),
         ("temp=0.9+p0.9", dict(do_sample=True, temperature=0.9, top_p=0.9)),
+        ("min_p=0.05",    dict(do_sample=True, temperature=0.9, min_p=0.05)),
     ]
 
     for prompt in prompts:
-        print(f"\nPROMPT: {prompt!r}")
+        logger.info(f"PROMPT: {prompt!r}")
         for name, kwargs in strategies:
             out = generator.generate(
                 prompt,
@@ -1744,96 +2625,92 @@ def demo() -> None:
                 stop_on_eos=False,
                 **kwargs,
             )
-            print(f"    [{name:<12}] {out!r}")
+            logger.info(f"    [{name:<12}] {out!r}")
 
     # ------------------------------------------------------------------
     # 6. Verify KV cache correctness
     # ------------------------------------------------------------------
-    print("\n[5/5] Verifying KV-cache correctness ...")
+    logger.info("[5/8] Verifying KV-cache correctness ...")
     model.eval()
     test_prompt = "the quick brown fox jumps"
     ids = torch.tensor(
         [tokenizer.encode(test_prompt, allow_special=True)], device=device
     )
     with torch.no_grad():
-        # Full sequence, no cache.
         logits_nocache = model(ids)[0, -1]
-        # Cached: prefill then one step.
         _, caches = model(ids, return_kv_caches=True)
-        # Feed the last token again with cache to get the same "next token"
-        # distribution for the same position.
-        logits_cache, _ = model(ids[:, -1:], kv_caches=caches, return_kv_caches=True)
+        logits_cache, _ = model(
+            ids[:, -1:], kv_caches=caches, return_kv_caches=True
+        )
         logits_cache = logits_cache[0, -1]
 
     diff = (logits_nocache - logits_cache).abs().max().item()
-    print(f"    max |logits_no_cache - logits_with_cache| = {diff:.2e}")
+    logger.info(f"    max |logits_no_cache - logits_with_cache| = {diff:.2e}")
     assert diff < 1e-3, "KV cache mismatch!"
-    print("    ✓ KV cache matches non-cached forward pass.")
+    logger.info("    OK: KV cache matches non-cached forward pass.")
 
-    print("\n" + "=" * 78)
-    print("Demo complete. Model and checkpoints saved under ./demo_checkpoints")
-    print("=" * 78)
+    # ------------------------------------------------------------------
+    # 7. Batched generation
+    # ------------------------------------------------------------------
+    logger.info("[6/8] Batched generation ...")
+    batch_prompts = [
+        "the quick brown fox",
+        "the lazy dog",
+        "the fox and the dog are",
+    ]
+    batch_outputs = generator.generate_batch(
+        batch_prompts,
+        max_new_tokens=15,
+        temperature=0.7,
+        top_k=40,
+        do_sample=True,
+        stop_on_eos=False,
+    )
+    for p, o in zip(batch_prompts, batch_outputs):
+        logger.info(f"    PROMPT: {p!r}  ->  {o!r}")
 
+    # ------------------------------------------------------------------
+    # 8. Streaming generation
+    # ------------------------------------------------------------------
+    logger.info("[7/8] Streaming generation ...")
+    logger.info("    PROMPT: 'the quick brown fox'")
+    chunks = []
+    for chunk in generator.stream_generate(
+        "the quick brown fox",
+        max_new_tokens=15,
+        temperature=0.7,
+        top_k=40,
+        stop_on_eos=False,
+    ):
+        chunks.append(chunk)
+    logger.info(f"    streamed: {''.join(chunks)!r}")
 
-# ==============================================================================
-# SECTION 13: EXTENSION SCAFFOLDS
-# ==============================================================================
+    # ------------------------------------------------------------------
+    # 9. save_pretrained / from_pretrained
+    # ------------------------------------------------------------------
+    logger.info("[8/8] save_pretrained / from_pretrained round-trip ...")
+    model_dir = ckpt_dir / "model"
+    model.save_pretrained(model_dir)
+    reloaded = LLM.from_pretrained(model_dir)
+    reloaded.attach_tokenizer(tokenizer)
+    reloaded.to(device)
 
-class ClassificationHead(nn.Module):
-    """
-    Classification head for text classification .
+    # Verify the reloaded model produces the same logits.
+    with torch.no_grad():
+        logits_orig = model(ids)[0, -1]
+        logits_reloaded = reloaded(ids)[0, -1]
+    diff2 = (logits_orig - logits_reloaded).abs().max().item()
+    logger.info(f"    max |logits_orig - logits_reloaded| = {diff2:.2e}")
+    assert diff2 < 1e-5, "Reloaded model mismatch!"
+    logger.info("    OK: round-trip succeeds.")
 
-    Reuses the LLM backbone (which acts as an encoder of contextualised
-    embeddings) and adds a small classifier on top. The `[CLS]` token
-    representation — or the mean-pooled token representations — feeds the
-    classifier. This matches the "task-specific model" architecture
+    # Use the convenience generate() method on the model itself.
+    out = reloaded.generate("the lazy dog", max_new_tokens=10, do_sample=False)
+    logger.info(f"    reloaded.generate('the lazy dog') = {out!r}")
 
-    """
-
-    def __init__(self, backbone: LLM, num_labels: int, pooling: str = "mean") -> None:
-        super().__init__()
-        self.backbone = backbone
-        self.pooling = pooling
-        self.classifier = nn.Linear(backbone.config.hidden_size, num_labels)
-
-    def forward(self, input_ids: torch.Tensor, attention_mask: Optional[torch.Tensor] = None) -> torch.Tensor:
-        hidden = self.backbone.final_norm(
-            self.backbone.embed_tokens(input_ids)  # placeholder; see note
-        )
-        # NOTE: For a real classifier you would run the full Transformer
-        # stack and pool the resulting hidden states. This stub keeps the
-        # file focused on the generative path.
-        if self.pooling == "mean":
-            pooled = hidden.mean(dim=1)
-        else:
-            pooled = hidden[:, 0]
-        return self.classifier(pooled)
-
-
-class EmbeddingModel(nn.Module):
-    """
-    Text-embedding model scaffold .
-
-    A full implementation would attach a mean-pooling layer to the final
-    hidden states of the LLM backbone and fine-tune it with a contrastive
-    loss (Ch. 10). The idea is:
-
-        emb = normalize(mean_pool(backbone(input_ids)))
-        loss = InfoNCE(emb_anchor, emb_positive, emb_negatives)
-
-    the complete loss formulation. Here we only define the
-    forward pass shape so you can drop in your preferred loss.
-    """
-
-    def __init__(self, backbone: LLM) -> None:
-        super().__init__()
-        self.backbone = backbone
-
-    def forward(self, input_ids: torch.Tensor) -> torch.Tensor:
-        # Placeholder: uses embedding layer only. See note above.
-        h = self.backbone.embed_tokens(input_ids)
-        h = h.mean(dim=1)
-        return F.normalize(h, dim=-1)
+    logger.info(sep)
+    logger.info("Demo complete. Model and checkpoints saved under ./demo_checkpoints")
+    logger.info(sep)
 
 
 # ==============================================================================
