@@ -11575,6 +11575,1806 @@
             "Requires external metadata or heuristic onboarding to solve"
           ]
         }
+      },
+      {
+        "index": 351,
+        "algorithm_name": "Gauss-Markov Theorem",
+        "category": "Statistical Foundations",
+        "eli5": "The mathematical guarantee that if your data behaves nicely (no weird correlations in errors), drawing a straight line through it using Ordinary Least Squares gives you the absolute best, most reliable guess possible.",
+        "purpose": "States that in a linear regression model where errors have zero mean, are uncorrelated, and have equal variances, OLS is the Best Linear Unbiased Estimator (BLUE).",
+        "input_dataset": "Tabular data meeting OLS assumptions.",
+        "usecase_scenarios": [
+          "Justifying OLS usage",
+          "Econometrics",
+          "Linear modeling foundations"
+        ],
+        "outcome": "Theoretical guarantee of OLS optimality.",
+        "benchmark_metrics": [
+          "Variance of estimators",
+          "Unbiasedness"
+        ],
+        "metadata": {
+          "frameworks_classes": [
+            "statsmodels",
+            "Theoretical Math"
+          ],
+          "key_hyperparameters": [
+            "N/A"
+          ],
+          "computational_complexity": "N/A (Theoretical)",
+          "pros": [
+            "Provides rigorous foundation for linear regression",
+            "Guarantees minimum variance among linear unbiased estimators"
+          ],
+          "cons": [
+            "Assumptions (homoscedasticity, no autocorrelation) are frequently violated in real-world data"
+          ]
+        }
+      },
+      {
+        "index": 352,
+        "algorithm_name": "Gini Impurity Index",
+        "category": "Tree-Based Learning / Evaluation",
+        "eli5": "Imagining you blindly pick an item from a box and guess its label based on the mix of items inside; Gini impurity is the chance you'll guess wrong.",
+        "purpose": "Measures the likelihood of an incorrect classification if a new instance were randomly classified according to the distribution of labels in the subset.",
+        "input_dataset": "Categorical target variables in decision tree nodes.",
+        "usecase_scenarios": [
+          "CART decision tree splitting",
+          "Random Forest feature importance"
+        ],
+        "outcome": "Scalar value between 0 (pure) and 0.5 (maximum impurity for binary).",
+        "benchmark_metrics": [
+          "Gini Decrease (Information Gain equivalent)"
+        ],
+        "metadata": {
+          "frameworks_classes": [
+            "sklearn.tree.DecisionTreeClassifier"
+          ],
+          "key_hyperparameters": [
+            "criterion='gini'"
+          ],
+          "computational_complexity": "O(K) where K is number of classes",
+          "pros": [
+            "Computationally faster than Entropy (no logarithms)",
+            "Works excellently for binary and multiclass"
+          ],
+          "cons": [
+            "Tends to isolate the most frequent class in the first splits"
+          ]
+        }
+      },
+      {
+        "index": 353,
+        "algorithm_name": "Information Gain (Entropy Reduction)",
+        "category": "Tree-Based Learning / Information Theory",
+        "eli5": "Measuring how much a specific question (like 'Is it red?') clears up the mystery and reduces the chaos (entropy) when trying to guess what an object is.",
+        "purpose": "Calculates the reduction in entropy (uncertainty) achieved by splitting a dataset on a specific feature, used to build decision trees.",
+        "input_dataset": "Categorical or discretized continuous features.",
+        "usecase_scenarios": [
+          "ID3 / C4.5 decision trees",
+          "Feature selection"
+        ],
+        "outcome": "Scalar value representing bits/nats of uncertainty reduced.",
+        "benchmark_metrics": [
+          "Entropy",
+          "Information Gain Ratio"
+        ],
+        "metadata": {
+          "frameworks_classes": [
+            "sklearn.tree.DecisionTreeClassifier"
+          ],
+          "key_hyperparameters": [
+            "criterion='entropy'"
+          ],
+          "computational_complexity": "O(K * log(K))",
+          "pros": [
+            "Theoretically grounded in information theory",
+            "Often creates more balanced trees than Gini"
+          ],
+          "cons": [
+            "Slightly slower to compute due to logarithms",
+            "Biased towards features with many distinct values (requires Gain Ratio)"
+          ]
+        }
+      },
+      {
+        "index": 354,
+        "algorithm_name": "Mean Squared Logarithmic Error (MSLE)",
+        "category": "Loss Functions",
+        "eli5": "Punishing a model based on the *ratio* of its mistake rather than the raw difference, so predicting 100 instead of 10 is punished just as much as predicting 10 instead of 1.",
+        "purpose": "Calculates the mean squared difference between the logarithms of the predicted and actual values, penalizing underestimates more than overestimates.",
+        "input_dataset": "Continuous targets with exponential growth or wide ranges (e.g., house prices, population).",
+        "usecase_scenarios": [
+          "Predicting counts",
+          "Real estate pricing",
+          "Targets with large variance"
+        ],
+        "outcome": "Log-scaled error penalty.",
+        "benchmark_metrics": [
+          "MSLE",
+          "RMSLE"
+        ],
+        "metadata": {
+          "frameworks_classes": [
+            "sklearn.metrics.mean_squared_log_error",
+            "tf.keras.losses.MSLE"
+          ],
+          "key_hyperparameters": [
+            "N/A"
+          ],
+          "computational_complexity": "O(N)",
+          "pros": [
+            "Handles targets spanning several orders of magnitude",
+            "Penalizes relative errors equally"
+          ],
+          "cons": [
+            "Cannot handle negative target values",
+            "Asymmetric penalty can bias predictions"
+          ]
+        }
+      },
+      {
+        "index": 355,
+        "algorithm_name": "Focal Loss",
+        "category": "Loss Functions / Computer Vision",
+        "eli5": "A grading system that ignores the easy questions the model already knows and focuses all the penalty points on the rare, incredibly hard questions it keeps getting wrong.",
+        "purpose": "Modifies standard Cross-Entropy loss by adding a modulating factor that down-weights the loss assigned to well-classified examples, focusing training on hard negatives.",
+        "input_dataset": "Highly imbalanced datasets (e.g., object detection with many background pixels).",
+        "usecase_scenarios": [
+          "Object detection (RetinaNet)",
+          "Imbalanced medical diagnosis",
+          "Fraud detection"
+        ],
+        "outcome": "Dynamically scaled cross-entropy loss.",
+        "benchmark_metrics": [
+          "Average Precision (AP)",
+          "F1-Score on minority class"
+        ],
+        "metadata": {
+          "frameworks_classes": [
+            "torchvision.ops.focal_loss",
+            "Custom Keras/PyTorch"
+          ],
+          "key_hyperparameters": [
+            "alpha (class weighting)",
+            "gamma (focusing parameter)"
+          ],
+          "computational_complexity": "O(N)",
+          "pros": [
+            "Solves extreme class imbalance elegantly",
+            "Prevents easy negatives from overwhelming the gradient"
+          ],
+          "cons": [
+            "Requires tuning of gamma",
+            "Can slow down convergence on balanced datasets"
+          ]
+        }
+      },
+      {
+        "index": 356,
+        "algorithm_name": "Contrastive Loss",
+        "category": "Metric Learning / Deep Learning",
+        "eli5": "Teaching a computer to recognize twins by pulling identical pairs close together and pushing different pairs far apart, with a strict boundary on how far is 'far enough'.",
+        "purpose": "Trains Siamese networks to learn an embedding space where similar pairs have small distances and dissimilar pairs have distances larger than a margin.",
+        "input_dataset": "Pairs of inputs with binary similarity labels.",
+        "usecase_scenarios": [
+          "Face verification",
+          "Signature matching",
+          "Few-shot learning"
+        ],
+        "outcome": "Embeddings clustered by semantic similarity.",
+        "benchmark_metrics": [
+          "Verification Accuracy",
+          "ROC-AUC"
+        ],
+        "metadata": {
+          "frameworks_classes": [
+            "PyTorch (Custom)",
+            "TensorFlow Addons"
+          ],
+          "key_hyperparameters": [
+            "margin"
+          ],
+          "computational_complexity": "O(N_pairs)",
+          "pros": [
+            "Intuitive geometric interpretation",
+            "Excellent for pairwise verification"
+          ],
+          "cons": [
+            "Requires careful pair mining",
+            "Margin hyperparameter is sensitive"
+          ]
+        }
+      },
+      {
+        "index": 357,
+        "algorithm_name": "Triplet Loss",
+        "category": "Metric Learning / Deep Learning",
+        "eli5": "Showing the computer an 'anchor' face, a matching face (positive), and a stranger's face (negative), and forcing it to arrange them so the stranger is always further away than the match.",
+        "purpose": "Optimizes embeddings by ensuring the distance between an anchor and a positive sample is smaller than the distance between the anchor and a negative sample by a defined margin.",
+        "input_dataset": "Triplets of inputs (Anchor, Positive, Negative).",
+        "usecase_scenarios": [
+          "FaceNet (Face recognition)",
+          "Image retrieval",
+          "Recommender systems"
+        ],
+        "outcome": "Highly structured embedding space.",
+        "benchmark_metrics": [
+          "Recall@K",
+          "Mean Average Precision (mAP)"
+        ],
+        "metadata": {
+          "frameworks_classes": [
+            "tf.keras.losses.Triplet",
+            "PyTorch (Custom)"
+          ],
+          "key_hyperparameters": [
+            "margin",
+            "distance_metric"
+          ],
+          "computational_complexity": "O(N_triplets)",
+          "pros": [
+            "More stable than Contrastive Loss",
+            "Directly optimizes ranking"
+          ],
+          "cons": [
+            "Requires sophisticated 'hard negative mining' to train effectively"
+          ]
+        }
+      },
+      {
+        "index": 358,
+        "algorithm_name": "Wasserstein Distance (Earth Mover's Distance)",
+        "category": "Distance Metric / Generative AI",
+        "eli5": "Figuring out the cheapest way to shovel a pile of dirt from one shape into another shape, measuring the true physical effort to transform one distribution into another.",
+        "purpose": "Measures the distance between two probability distributions based on the minimum 'cost' to transform one into the other, providing smooth gradients even for non-overlapping distributions.",
+        "input_dataset": "Probability distributions, point clouds, histograms.",
+        "usecase_scenarios": [
+          "Wasserstein GANs (WGAN)",
+          "Domain adaptation",
+          "Color transfer"
+        ],
+        "outcome": "Scalar distance metric.",
+        "benchmark_metrics": [
+          "Wasserstein-1 Distance",
+          "FID"
+        ],
+        "metadata": {
+          "frameworks_classes": [
+            "scipy.stats.wasserstein_distance",
+            "POT (Python Optimal Transport)"
+          ],
+          "key_hyperparameters": [
+            "N/A"
+          ],
+          "computational_complexity": "O(N^3 log N) for exact, O(N) for 1D",
+          "pros": [
+            "Provides meaningful gradients for disjoint distributions",
+            "Mathematically robust"
+          ],
+          "cons": [
+            "Computationally expensive in high dimensions (requires Sinkhorn approximation)"
+          ]
+        }
+      },
+      {
+        "index": 359,
+        "algorithm_name": "Expectation-Maximization (EM) Algorithm",
+        "category": "Optimization / Probabilistic Modeling",
+        "eli5": "Guessing the missing pieces of a puzzle, then updating your guess based on the new picture, over and over until the picture is clear.",
+        "purpose": "Iteratively finds maximum likelihood estimates for models with latent (hidden) variables by alternating between computing expected values (E-step) and maximizing parameters (M-step).",
+        "input_dataset": "Data with hidden/missing variables (e.g., GMMs, HMMs).",
+        "usecase_scenarios": [
+          "Gaussian Mixture Models",
+          "Topic Modeling (PLSA)",
+          "Handling missing data"
+        ],
+        "outcome": "Converged parameters for the latent variable model.",
+        "benchmark_metrics": [
+          "Log-Likelihood convergence",
+          "AIC/BIC"
+        ],
+        "metadata": {
+          "frameworks_classes": [
+            "sklearn.mixture",
+            "hmmlearn"
+          ],
+          "key_hyperparameters": [
+            "max_iter",
+            "tol"
+          ],
+          "computational_complexity": "O(I * N * K^2) depending on model",
+          "pros": [
+            "Handles latent variables elegantly",
+            "Guaranteed to increase likelihood each step"
+          ],
+          "cons": [
+            "Prone to local optima",
+            "Slow convergence"
+          ]
+        }
+      },
+      {
+        "index": 360,
+        "algorithm_name": "Gibbs Sampling",
+        "category": "Bayesian Inference / MCMC",
+        "eli5": "Trying to map a dark room by taking one step at a time, changing only your X or Y coordinate based on the immediate surroundings, until you've explored the whole space.",
+        "purpose": "A Markov Chain Monte Carlo (MCMC) algorithm that generates samples from a multivariate probability distribution by iteratively sampling each variable conditioned on the current values of all other variables.",
+        "input_dataset": "Complex multivariate Bayesian posterior distributions.",
+        "usecase_scenarios": [
+          "Bayesian hierarchical models",
+          "Latent Dirichlet Allocation (Collapsed Gibbs)"
+        ],
+        "outcome": "Sequence of correlated samples approximating the posterior.",
+        "benchmark_metrics": [
+          "Effective Sample Size (ESS)",
+          "Autocorrelation"
+        ],
+        "metadata": {
+          "frameworks_classes": [
+            "PyMC",
+            "Stan"
+          ],
+          "key_hyperparameters": [
+            "burn_in",
+            "thinning",
+            "num_samples"
+          ],
+          "computational_complexity": "O(I * D) where D is dimensions",
+          "pros": [
+            "No need to tune proposal distributions",
+            "Always accepts the new sample"
+          ],
+          "cons": [
+            "Highly correlated samples (slow mixing)",
+            "Requires known conditional distributions"
+          ]
+        }
+      },
+      {
+        "index": 361,
+        "algorithm_name": "Metropolis-Hastings Algorithm",
+        "category": "Bayesian Inference / MCMC",
+        "eli5": "Exploring a mountain range by taking random steps; you always walk uphill, but sometimes you accept a step downhill so you don't get stuck on a fake peak.",
+        "purpose": "A general MCMC method that generates samples from a probability distribution by proposing random moves and accepting/rejecting them based on an acceptance ratio.",
+        "input_dataset": "Unnormalized target probability distributions.",
+        "usecase_scenarios": [
+          "Complex Bayesian inference",
+          "Statistical physics simulations"
+        ],
+        "outcome": "Markov chain of samples from the target distribution.",
+        "benchmark_metrics": [
+          "Acceptance Rate",
+          "Effective Sample Size (ESS)"
+        ],
+        "metadata": {
+          "frameworks_classes": [
+            "PyMC",
+            "emcee"
+          ],
+          "key_hyperparameters": [
+            "proposal_distribution",
+            "num_steps"
+          ],
+          "computational_complexity": "O(I * Cost of likelihood evaluation)",
+          "pros": [
+            "Extremely flexible (works with any distribution)",
+            "Only requires unnormalized density"
+          ],
+          "cons": [
+            "Requires careful tuning of proposal variance",
+            "Can get stuck in local modes"
+          ]
+        }
+      },
+      {
+        "index": 362,
+        "algorithm_name": "Hamiltonian Monte Carlo (HMC)",
+        "category": "Bayesian Inference / MCMC",
+        "eli5": "Rolling a frictionless marble across a hilly landscape using physics (momentum) so it smoothly glides through valleys and over hills to explore the whole map efficiently.",
+        "purpose": "An advanced MCMC method that uses Hamiltonian dynamics (gradient information) to propose distant moves with high acceptance rates, drastically reducing autocorrelation.",
+        "input_dataset": "Continuous, differentiable Bayesian posterior distributions.",
+        "usecase_scenarios": [
+          "High-dimensional Bayesian models",
+          "Stan's default sampler"
+        ],
+        "outcome": "Highly efficient, low-autocorrelation samples.",
+        "benchmark_metrics": [
+          "Effective Sample Size per second",
+          "Divergence rate"
+        ],
+        "metadata": {
+          "frameworks_classes": [
+            "PyMC (NUTS)",
+            "Stan"
+          ],
+          "key_hyperparameters": [
+            "step_size",
+            "num_leapfrog_steps"
+          ],
+          "computational_complexity": "O(L * Cost of gradient evaluation)",
+          "pros": [
+            "Explores high-dimensional spaces incredibly fast",
+            "Minimal random walk behavior"
+          ],
+          "cons": [
+            "Requires differentiable log-posterior",
+            "Computationally heavy per step"
+          ]
+        }
+      },
+      {
+        "index": 363,
+        "algorithm_name": "Laplace Approximation",
+        "category": "Bayesian Inference",
+        "eli5": "Instead of calculating the exact, messy shape of a mountain peak, you just draw a perfect, smooth bell curve over the very top to approximate the summit.",
+        "purpose": "Approximates a complex posterior distribution with a Gaussian distribution centered at the Maximum A Posteriori (MAP) estimate, using the inverse Hessian as the covariance.",
+        "input_dataset": "Differentiable Bayesian models.",
+        "usecase_scenarios": [
+          "Fast Bayesian uncertainty estimation",
+          "Bayesian Neural Networks"
+        ],
+        "outcome": "Gaussian approximation of the posterior.",
+        "benchmark_metrics": [
+          "Marginal Likelihood approximation",
+          "Calibration Error"
+        ],
+        "metadata": {
+          "frameworks_classes": [
+            "laplace-torch",
+            "Custom PyTorch"
+          ],
+          "key_hyperparameters": [
+            "hessian_approximation"
+          ],
+          "computational_complexity": "O(P^2) or O(P^3) where P is parameters",
+          "pros": [
+            "Extremely fast compared to MCMC",
+            "Provides analytical uncertainty"
+          ],
+          "cons": [
+            "Fails on multi-modal or highly skewed posteriors",
+            "Hessian computation is expensive for large NNs"
+          ]
+        }
+      },
+      {
+        "index": 364,
+        "algorithm_name": "Bootstrap Aggregating (Bagging)",
+        "category": "Ensemble Learning",
+        "eli5": "Making multiple copies of your dataset by sampling with replacement, training a model on each, and averaging their answers to smooth out wild mistakes.",
+        "purpose": "Reduces variance and prevents overfitting by training multiple base estimators on random subsets of the data (with replacement) and aggregating their predictions.",
+        "input_dataset": "High-variance tabular data.",
+        "usecase_scenarios": [
+          "Random Forests",
+          "Stabilizing unstable learners (e.g., deep Decision Trees)"
+        ],
+        "outcome": "Aggregated, low-variance predictions.",
+        "benchmark_metrics": [
+          "Variance reduction",
+          "Out-of-Bag (OOB) Error"
+        ],
+        "metadata": {
+          "frameworks_classes": [
+            "sklearn.ensemble.BaggingClassifier"
+          ],
+          "key_hyperparameters": [
+            "n_estimators",
+            "max_samples",
+            "bootstrap"
+          ],
+          "computational_complexity": "O(K * N * M) where K is estimators",
+          "pros": [
+            "Massively reduces variance",
+            "Highly parallelizable",
+            "Provides OOB validation"
+          ],
+          "cons": [
+            "Does not reduce bias",
+            "Loses model interpretability"
+          ]
+        }
+      },
+      {
+        "index": 365,
+        "algorithm_name": "Forward Stagewise Additive Modeling",
+        "category": "Ensemble Learning",
+        "eli5": "Building a complex model by adding one tiny, simple rule at a time, never changing the old rules, just adding new ones to fix the remaining mistakes.",
+        "purpose": "The foundational iterative process behind boosting, where base learners are added sequentially to minimize the residual loss without altering previously fitted components.",
+        "input_dataset": "Tabular data.",
+        "usecase_scenarios": [
+          "AdaBoost",
+          "Gradient Boosting foundations"
+        ],
+        "outcome": "Additive ensemble model.",
+        "benchmark_metrics": [
+          "Training Loss convergence",
+          "Accuracy"
+        ],
+        "metadata": {
+          "frameworks_classes": [
+            "Theoretical Foundation"
+          ],
+          "key_hyperparameters": [
+            "learning_rate (shrinkage)"
+          ],
+          "computational_complexity": "O(K * Cost of base learner)",
+          "pros": [
+            "Systematically reduces bias",
+            "Flexible loss function integration"
+          ],
+          "cons": [
+            "Sequential training is slow",
+            "Prone to overfitting if not regularized"
+          ]
+        }
+      },
+      {
+        "index": 366,
+        "algorithm_name": "Momentum Optimization",
+        "category": "Deep Learning Optimization",
+        "eli5": "A snowball rolling down a hill, gathering speed and ignoring tiny bumps, so it powers through flat areas and small dips to reach the bottom faster.",
+        "purpose": "Accelerates gradient descent by accumulating a velocity vector of past gradients, helping the optimizer push through ravines and dampen oscillations.",
+        "input_dataset": "Neural network gradients.",
+        "usecase_scenarios": [
+          "Training deep CNNs",
+          "Overcoming saddle points"
+        ],
+        "outcome": "Accelerated weight updates.",
+        "benchmark_metrics": [
+          "Convergence speed",
+          "Epochs to target loss"
+        ],
+        "metadata": {
+          "frameworks_classes": [
+            "torch.optim.SGD (momentum=0.9)",
+            "tf.keras.optimizers.SGD"
+          ],
+          "key_hyperparameters": [
+            "momentum",
+            "nesterov"
+          ],
+          "computational_complexity": "O(P) where P is parameters",
+          "pros": [
+            "Speeds up convergence significantly",
+            "Escapes shallow local minima"
+          ],
+          "cons": [
+            "Can overshoot the global minimum if momentum is too high"
+          ]
+        }
+      },
+      {
+        "index": 367,
+        "algorithm_name": "AdaDelta Optimizer",
+        "category": "Deep Learning Optimization",
+        "eli5": "An upgrade to AdaGrad that uses a sliding window of recent mistakes to adjust the learning rate, so it never completely stops learning even after a long time.",
+        "purpose": "An extension of AdaGrad that adapts learning rates based on a moving window of gradient updates, mitigating AdaGrad's aggressive, monotonically decreasing learning rate.",
+        "input_dataset": "Neural network gradients.",
+        "usecase_scenarios": [
+          "RNN training",
+          "Models requiring stable long-term learning rates"
+        ],
+        "outcome": "Adaptively scaled weight updates.",
+        "benchmark_metrics": [
+          "Final validation loss",
+          "Stability over epochs"
+        ],
+        "metadata": {
+          "frameworks_classes": [
+            "torch.optim.Adadelta",
+            "tf.keras.optimizers.Adadelta"
+          ],
+          "key_hyperparameters": [
+            "rho (decay rate)",
+            "eps"
+          ],
+          "computational_complexity": "O(P)",
+          "pros": [
+            "No manual initial learning rate required",
+            "Does not stop learning prematurely"
+          ],
+          "cons": [
+            "Can be slower to converge initially than Adam"
+          ]
+        }
+      },
+      {
+        "index": 368,
+        "algorithm_name": "Adamax Optimizer",
+        "category": "Deep Learning Optimization",
+        "eli5": "A variation of Adam that uses the absolute maximum of past gradients instead of the average, making it more stable when dealing with sudden, massive spikes in data.",
+        "purpose": "A variant of Adam based on the infinity norm, providing a more robust bound on the second moment estimate, which is beneficial for sparse or noisy gradients.",
+        "input_dataset": "Neural network gradients.",
+        "usecase_scenarios": [
+          "NLP models with sparse embeddings",
+          "Noisy gradient environments"
+        ],
+        "outcome": "Robustly adapted weight updates.",
+        "benchmark_metrics": [
+          "Convergence stability",
+          "Validation loss"
+        ],
+        "metadata": {
+          "frameworks_classes": [
+            "torch.optim.Adamax",
+            "tf.keras.optimizers.Adamax"
+          ],
+          "key_hyperparameters": [
+            "lr",
+            "betas",
+            "eps"
+          ],
+          "computational_complexity": "O(P)",
+          "pros": [
+            "More stable than Adam for sparse data",
+            "Bounds the learning rate effectively"
+          ],
+          "cons": [
+            "Slightly less popular/tuned than standard Adam"
+          ]
+        }
+      },
+      {
+        "index": 369,
+        "algorithm_name": "Nadam Optimizer",
+        "category": "Deep Learning Optimization",
+        "eli5": "Combining the smart, adaptive stepping of Adam with the 'look-ahead' foresight of Nesterov Momentum, so it anticipates the curve before it turns.",
+        "purpose": "Integrates Nesterov Accelerated Gradient (NAG) into the Adam optimizer, providing faster convergence by looking ahead at the momentum-adjusted position.",
+        "input_dataset": "Neural network gradients.",
+        "usecase_scenarios": [
+          "Complex convex/non-convex optimization",
+          "Deep CNNs"
+        ],
+        "outcome": "Foresight-adjusted adaptive weight updates.",
+        "benchmark_metrics": [
+          "Epochs to convergence",
+          "Final loss"
+        ],
+        "metadata": {
+          "frameworks_classes": [
+            "tf.keras.optimizers.Nadam",
+            "Custom PyTorch"
+          ],
+          "key_hyperparameters": [
+            "lr",
+            "betas",
+            "eps",
+            "momentum_decay"
+          ],
+          "computational_complexity": "O(P)",
+          "pros": [
+            "Faster convergence than standard Adam",
+            "Combines best of Adam and NAG"
+          ],
+          "cons": [
+            "More hyperparameters to tune",
+            "Can be unstable on some specific architectures"
+          ]
+        }
+      },
+      {
+        "index": 370,
+        "algorithm_name": "Cosine Annealing Learning Rate",
+        "category": "Deep Learning Optimization",
+        "eli5": "Starting with huge, exploratory steps to find the right valley, then smoothly and gently shrinking your step size in a wave-like pattern to settle perfectly at the bottom.",
+        "purpose": "A learning rate scheduling strategy that decreases the learning rate following a cosine curve, allowing for broad exploration early on and fine-grained exploitation later.",
+        "input_dataset": "Neural network training loops.",
+        "usecase_scenarios": [
+          "Image classification (ResNets, ViTs)",
+          "Escaping local minima"
+        ],
+        "outcome": "Dynamically adjusted learning rate.",
+        "benchmark_metrics": [
+          "Final test accuracy",
+          "Generalization gap"
+        ],
+        "metadata": {
+          "frameworks_classes": [
+            "torch.optim.lr_scheduler.CosineAnnealingLR"
+          ],
+          "key_hyperparameters": [
+            "T_max (max epochs)",
+            "eta_min (minimum LR)"
+          ],
+          "computational_complexity": "O(1) per step",
+          "pros": [
+            "Often yields state-of-the-art generalization",
+            "No manual decay tuning needed"
+          ],
+          "cons": [
+            "Requires knowing the total number of epochs in advance"
+          ]
+        }
+      },
+      {
+        "index": 371,
+        "algorithm_name": "Early Stopping",
+        "category": "Regularization / Deep Learning",
+        "eli5": "Stopping the training the exact moment the model stops learning general rules and starts memorizing the training data's noise, like quitting studying before you get too tired and start making silly mistakes.",
+        "purpose": "A form of regularization that halts the training process when the validation error stops improving, preventing the model from overfitting to the training data.",
+        "input_dataset": "Training and validation sets.",
+        "usecase_scenarios": [
+          "Neural network training",
+          "Gradient boosting"
+        ],
+        "outcome": "Optimal model weights from the best validation epoch.",
+        "benchmark_metrics": [
+          "Validation Loss",
+          "Generalization Gap"
+        ],
+        "metadata": {
+          "frameworks_classes": [
+            "tf.keras.callbacks.EarlyStopping",
+            "PyTorch Lightning"
+          ],
+          "key_hyperparameters": [
+            "patience",
+            "min_delta",
+            "monitor"
+          ],
+          "computational_complexity": "Saves compute time",
+          "pros": [
+            "Prevents overfitting",
+            "Saves massive amounts of training time and compute"
+          ],
+          "cons": [
+            "Requires a dedicated validation set",
+            "Can stop prematurely on noisy validation curves"
+          ]
+        }
+      },
+      {
+        "index": 372,
+        "algorithm_name": "Label Smoothing",
+        "category": "Regularization / Deep Learning",
+        "eli5": "Instead of telling the model 'This is 100% definitely a cat,' telling it 'This is 90% a cat and 10% other things,' so it doesn't become overconfident and brittle.",
+        "purpose": "A regularization technique that replaces hard one-hot labels with soft targets, preventing the model from becoming overly confident and improving calibration.",
+        "input_dataset": "Classification tasks with one-hot encoded targets.",
+        "usecase_scenarios": [
+          "Image classification",
+          "Transformer training (NLP)"
+        ],
+        "outcome": "Better calibrated probability outputs.",
+        "benchmark_metrics": [
+          "Expected Calibration Error (ECE)",
+          "Test Accuracy"
+        ],
+        "metadata": {
+          "frameworks_classes": [
+            "tf.keras.losses.CategoricalCrossentropy(label_smoothing=0.1)"
+          ],
+          "key_hyperparameters": [
+            "smoothing_factor (e.g., 0.1)"
+          ],
+          "computational_complexity": "O(1) overhead",
+          "pros": [
+            "Improves model calibration",
+            "Acts as a strong regularizer"
+          ],
+          "cons": [
+            "Can slightly reduce peak accuracy on clean datasets",
+            "Hurts performance if labels are already noisy"
+          ]
+        }
+      },
+      {
+        "index": 373,
+        "algorithm_name": "Mixup Data Augmentation",
+        "category": "Data Augmentation / Deep Learning",
+        "eli5": "Blending a picture of a dog and a picture of a cat together into a ghostly hybrid, and telling the model 'This is 50% dog and 50% cat' to teach it smooth transitions.",
+        "purpose": "Generates synthetic training samples by taking convex combinations of pairs of inputs and their labels, encouraging the model to learn linear behavior between training examples.",
+        "input_dataset": "Images, audio, or tabular data.",
+        "usecase_scenarios": [
+          "Improving robustness to adversarial attacks",
+          "Small dataset regularization"
+        ],
+        "outcome": "Synthetic, interpolated training batches.",
+        "benchmark_metrics": [
+          "Test Accuracy",
+          "Adversarial Robustness"
+        ],
+        "metadata": {
+          "frameworks_classes": [
+            "torchvision",
+            "Custom PyTorch/TF loops"
+          ],
+          "key_hyperparameters": [
+            "alpha (Beta distribution parameter)"
+          ],
+          "computational_complexity": "O(Batch_Size)",
+          "pros": [
+            "Massively improves generalization",
+            "Reduces memorization of noisy labels"
+          ],
+          "cons": [
+            "Can create unrealistic artifacts (e.g., ghostly overlapping objects)",
+            "Requires adjusting loss function for soft labels"
+          ]
+        }
+      },
+      {
+        "index": 374,
+        "algorithm_name": "CutMix Data Augmentation",
+        "category": "Data Augmentation / Deep Learning",
+        "eli5": "Cutting a square out of a picture of a dog and pasting a picture of a cat into the hole, forcing the model to look at the whole image instead of just memorizing the dog's nose.",
+        "purpose": "Replaces a patch of one image with a patch from another image, adjusting the label proportionally to the area of the patch, forcing the network to look at local features rather than global context.",
+        "input_dataset": "Images.",
+        "usecase_scenarios": [
+          "Image classification",
+          "Object localization"
+        ],
+        "outcome": "Spatially mixed training images.",
+        "benchmark_metrics": [
+          "Test Accuracy",
+          "Class Activation Map (CAM) quality"
+        ],
+        "metadata": {
+          "frameworks_classes": [
+            "Custom PyTorch/TF",
+            "Albumentations"
+          ],
+          "key_hyperparameters": [
+            "alpha (Beta distribution for area)"
+          ],
+          "computational_complexity": "O(Batch_Size)",
+          "pros": [
+            "Preserves realistic local features (no ghosting)",
+            "Improves object localization"
+          ],
+          "cons": [
+            "Can disrupt spatial relationships necessary for some tasks (e.g., segmentation)"
+          ]
+        }
+      },
+      {
+        "index": 375,
+        "algorithm_name": "BM25 (Okapi BM25)",
+        "category": "Information Retrieval / NLP",
+        "eli5": "The gold standard search engine formula that ranks documents by how rare the search words are, while penalizing documents that are just massively long and spammy.",
+        "purpose": "A bag-of-words retrieval function that ranks documents based on query terms, incorporating term frequency saturation and document length normalization.",
+        "input_dataset": "Text corpora and search queries.",
+        "usecase_scenarios": [
+          "Search engines",
+          "Elasticsearch default scoring",
+          "RAG retrieval pipelines"
+        ],
+        "outcome": "Ranked list of document relevance scores.",
+        "benchmark_metrics": [
+          "NDCG",
+          "Mean Average Precision (MAP)"
+        ],
+        "metadata": {
+          "frameworks_classes": [
+            "rank_bm25",
+            "Elasticsearch"
+          ],
+          "key_hyperparameters": [
+            "k1 (term frequency saturation)",
+            "b (length normalization)"
+          ],
+          "computational_complexity": "O(Q * D) where Q is query terms, D is docs",
+          "pros": [
+            "Highly effective baseline for search",
+            "Handles document length bias elegantly"
+          ],
+          "cons": [
+            "Ignores word order and deep semantics",
+            "Requires lexical overlap"
+          ]
+        }
+      },
+      {
+        "index": 376,
+        "algorithm_name": "Pointwise Mutual Information (PMI)",
+        "category": "NLP / Information Theory",
+        "eli5": "Measuring how much more often two words (like 'New' and 'York') show up together than you would expect if they were just randomly scattered in a book.",
+        "purpose": "Quantifies the discrepancy between the joint probability of two events occurring together and their individual probabilities assuming independence.",
+        "input_dataset": "Text corpora co-occurrence matrices.",
+        "usecase_scenarios": [
+          "Collocation extraction",
+          "Building semantic spaces",
+          "Feature selection"
+        ],
+        "outcome": "Association score between word pairs.",
+        "benchmark_metrics": [
+          "Correlation with human similarity judgments"
+        ],
+        "metadata": {
+          "frameworks_classes": [
+            "NLTK",
+            "Custom NumPy/SciPy"
+          ],
+          "key_hyperparameters": [
+            "smoothing (for rare words)"
+          ],
+          "computational_complexity": "O(V^2) where V is vocabulary",
+          "pros": [
+            "Captures strong semantic associations",
+            "Simple and interpretable"
+          ],
+          "cons": [
+            "Highly biased towards rare words (requires Normalized PMI)"
+          ]
+        }
+      },
+      {
+        "index": 377,
+        "algorithm_name": "Hierarchical Dirichlet Process (HDP)",
+        "category": "Topic Modeling / Bayesian",
+        "eli5": "A smart topic model that automatically figures out how many topics exist in a library, and allows topics to be shared and nested across different collections of books.",
+        "purpose": "A non-parametric Bayesian extension of LDA that allows for an infinite, unbounded number of topics, sharing topics across multiple groups of documents.",
+        "input_dataset": "Multiple corpora or grouped document collections.",
+        "usecase_scenarios": [
+          "Cross-corpus topic discovery",
+          "Dynamic topic modeling",
+          "When K is unknown"
+        ],
+        "outcome": "Infinite topic distributions and document assignments.",
+        "benchmark_metrics": [
+          "Held-out Perplexity",
+          "Topic Coherence"
+        ],
+        "metadata": {
+          "frameworks_classes": [
+            "gensim.models.HdpModel"
+          ],
+          "key_hyperparameters": [
+            "concentration parameters"
+          ],
+          "computational_complexity": "Very High (Gibbs sampling over infinite states)",
+          "pros": [
+            "No need to pre-specify number of topics",
+            "Shares topics across groups"
+          ],
+          "cons": [
+            "Extremely slow to train",
+            "Complex to interpret and tune"
+          ]
+        }
+      },
+      {
+        "index": 378,
+        "algorithm_name": "Word Mover's Distance (WMD)",
+        "category": "NLP / Distance Metric",
+        "eli5": "Calculating the semantic distance between two sentences by figuring out the minimum 'effort' to transform the words of one sentence into the words of the other using their Word2Vec meanings.",
+        "purpose": "Measures the dissimilarity between two text documents as the minimum cumulative distance that words from one document need to travel to match the words of another, using word embeddings.",
+        "input_dataset": "Text documents and pre-trained word embeddings.",
+        "usecase_scenarios": [
+          "Semantic text similarity",
+          "Document clustering",
+          "K-NN for text"
+        ],
+        "outcome": "Semantic distance score.",
+        "benchmark_metrics": [
+          "K-NN Classification Accuracy",
+          "Correlation with human similarity"
+        ],
+        "metadata": {
+          "frameworks_classes": [
+            "gensim.models.WmdSimilarity",
+            "POT"
+          ],
+          "key_hyperparameters": [
+            "embedding_model"
+          ],
+          "computational_complexity": "O(L^3 log L) where L is document length (Earth Mover's Distance)",
+          "pros": [
+            "Captures deep semantic similarity",
+            "Handles synonyms and paraphrasing beautifully"
+          ],
+          "cons": [
+            "Computationally very expensive for long documents",
+            "Ignores word order/syntax"
+          ]
+        }
+      },
+      {
+        "index": 379,
+        "algorithm_name": "Sentence-BERT (SBERT)",
+        "category": "NLP / Embeddings",
+        "eli5": "Taking BERT and putting it through a Siamese twin training camp so it can instantly spit out a single, perfect summary vector for a whole sentence, making comparing sentences lightning fast.",
+        "purpose": "Modifies the BERT architecture using Siamese and triplet network structures to derive semantically meaningful sentence embeddings that can be compared using cosine similarity.",
+        "input_dataset": "Sentence pairs with similarity labels or NLI datasets.",
+        "usecase_scenarios": [
+          "Semantic search",
+          "Clustering",
+          "Paraphrase detection"
+        ],
+        "outcome": "Fixed-size dense sentence embeddings.",
+        "benchmark_metrics": [
+          "Semantic Textual Similarity (STS) Spearman correlation"
+        ],
+        "metadata": {
+          "frameworks_classes": [
+            "sentence-transformers"
+          ],
+          "key_hyperparameters": [
+            "pooling_strategy (mean, max, CLS)",
+            "loss_function"
+          ],
+          "computational_complexity": "O(L^2) for encoding, O(1) for comparison",
+          "pros": [
+            "Massively faster than cross-encoders for search",
+            "High-quality semantic representations"
+          ],
+          "cons": [
+            "Slightly lower accuracy than Cross-Encoders for fine-grained entailment"
+          ]
+        }
+      },
+      {
+        "index": 380,
+        "algorithm_name": "ALBERT (A Lite BERT)",
+        "category": "NLP / LLM",
+        "eli5": "Shrinking BERT's massive brain by making it share the same memory weights across all its layers and factoring its vocabulary matrix, so it runs much faster with barely any loss in intelligence.",
+        "purpose": "Optimizes BERT by introducing cross-layer parameter sharing and factorized embedding parameterization, drastically reducing model size while maintaining performance.",
+        "input_dataset": "Massive text corpora.",
+        "usecase_scenarios": [
+          "Resource-constrained NLP",
+          "Mobile deployment",
+          "Fine-tuning baselines"
+        ],
+        "outcome": "Contextualized token embeddings.",
+        "benchmark_metrics": [
+          "GLUE",
+          "SQuAD",
+          "Parameter Count"
+        ],
+        "metadata": {
+          "frameworks_classes": [
+            "HuggingFace Transformers"
+          ],
+          "key_hyperparameters": [
+            "num_hidden_layers",
+            "embedding_size",
+            "hidden_size"
+          ],
+          "computational_complexity": "Lower memory footprint than BERT",
+          "pros": [
+            "Massive parameter reduction",
+            "Faster inference and training"
+          ],
+          "cons": [
+            "Slight performance drop on some complex reasoning tasks compared to RoBERTa"
+          ]
+        }
+      },
+      {
+        "index": 381,
+        "algorithm_name": "DistilBERT",
+        "category": "NLP / LLM",
+        "eli5": "A smaller, faster, cheaper student model that learns to perfectly mimic the massive BERT teacher model by copying its final answers and its internal thought processes.",
+        "purpose": "A distilled version of BERT that uses knowledge distillation to retain 97% of BERT's language understanding while being 60% faster and 40% smaller.",
+        "input_dataset": "Text corpora (distilled from BERT teacher).",
+        "usecase_scenarios": [
+          "Edge device NLP",
+          "High-throughput inference",
+          "Quick prototyping"
+        ],
+        "outcome": "Contextualized token embeddings.",
+        "benchmark_metrics": [
+          "GLUE",
+          "Inference Latency"
+        ],
+        "metadata": {
+          "frameworks_classes": [
+            "HuggingFace Transformers"
+          ],
+          "key_hyperparameters": [
+            "num_hidden_layers (reduced)",
+            "teacher_model"
+          ],
+          "computational_complexity": "40% fewer parameters than BERT-base",
+          "pros": [
+            "Extremely fast",
+            "Retains most of BERT's capabilities"
+          ],
+          "cons": [
+            "Loses some deep reasoning capabilities of larger models"
+          ]
+        }
+      },
+      {
+        "index": 382,
+        "algorithm_name": "XLNet",
+        "category": "NLP / LLM",
+        "eli5": "A language model that reads text in random, shuffled orders (Permutation Language Modeling) so it learns to predict words using both left and right context without cheating by seeing the masked word.",
+        "purpose": "Overcomes BERT's masked language modeling limitations by using Permutation Language Modeling and Two-Stream Self-Attention, capturing bidirectional context without masking artifacts.",
+        "input_dataset": "Massive text corpora.",
+        "usecase_scenarios": [
+          "Complex reading comprehension",
+          "Sentiment analysis",
+          "Document ranking"
+        ],
+        "outcome": "Contextualized token embeddings.",
+        "benchmark_metrics": [
+          "GLUE",
+          "SQuAD",
+          "RACE"
+        ],
+        "metadata": {
+          "frameworks_classes": [
+            "HuggingFace Transformers"
+          ],
+          "key_hyperparameters": [
+            "mem_len (memory length)",
+            "n_layer"
+          ],
+          "computational_complexity": "O(L^2) per layer",
+          "pros": [
+            "Captures bidirectional context without [MASK] tokens",
+            "Handles long dependencies via memory"
+          ],
+          "cons": [
+            "Computationally heavier to train than BERT",
+            "Complex architecture"
+          ]
+        }
+      },
+      {
+        "index": 383,
+        "algorithm_name": "ELECTRA",
+        "category": "NLP / LLM",
+        "eli5": "Training a language model by having a small 'generator' create fake words, and a larger 'discriminator' try to catch which words are fake, making the training incredibly efficient.",
+        "purpose": "Trains Transformer models using Replaced Token Detection (RTD) instead of Masked Language Modeling, updating weights on all tokens rather than just the masked 15%.",
+        "input_dataset": "Massive text corpora.",
+        "usecase_scenarios": [
+          "Compute-efficient pre-training",
+          "Downstream NLP tasks"
+        ],
+        "outcome": "Contextualized token embeddings.",
+        "benchmark_metrics": [
+          "GLUE",
+          "Compute-to-Performance ratio"
+        ],
+        "metadata": {
+          "frameworks_classes": [
+            "HuggingFace Transformers"
+          ],
+          "key_hyperparameters": [
+            "generator_size",
+            "discriminator_size"
+          ],
+          "computational_complexity": "Highly sample and compute efficient",
+          "pros": [
+            "Trains much faster than BERT for the same performance",
+            "Updates all tokens in the sequence"
+          ],
+          "cons": [
+            "Requires training two models simultaneously (Generator + Discriminator)"
+          ]
+        }
+      },
+      {
+        "index": 384,
+        "algorithm_name": "DeBERTa",
+        "category": "NLP / LLM",
+        "eli5": "Upgrading BERT's attention mechanism by separating the 'meaning' of a word from its 'position' in the sentence, allowing it to understand grammar and context much more precisely.",
+        "purpose": "Enhances BERT by disentangling content and position in the self-attention mechanism, and introducing an Enhanced Typematic Attention mask.",
+        "input_dataset": "Massive text corpora.",
+        "usecase_scenarios": [
+          "State-of-the-art NLP benchmarks",
+          "Complex syntactic understanding"
+        ],
+        "outcome": "Highly contextualized token embeddings.",
+        "benchmark_metrics": [
+          "SuperGLUE",
+          "SQuAD"
+        ],
+        "metadata": {
+          "frameworks_classes": [
+            "HuggingFace Transformers"
+          ],
+          "key_hyperparameters": [
+            "num_hidden_layers",
+            "hidden_size"
+          ],
+          "computational_complexity": "O(L^2) per layer",
+          "pros": [
+            "Consistently outperforms RoBERTa and XLNet",
+            "Superior grammatical understanding"
+          ],
+          "cons": [
+            "Slightly slower inference due to complex attention matrices"
+          ]
+        }
+      },
+      {
+        "index": 385,
+        "algorithm_name": "Longformer",
+        "category": "NLP / LLM",
+        "eli5": "A Transformer that reads massive documents (like whole books) by only paying close attention to nearby words and a few global 'summary' words, saving massive amounts of memory.",
+        "purpose": "Replaces the quadratic self-attention of standard Transformers with a linearly scaling attention mechanism (sliding window + global attention) to process extremely long documents.",
+        "input_dataset": "Long-form text (legal documents, scientific papers, books).",
+        "usecase_scenarios": [
+          "Document classification",
+          "Long-document QA",
+          "Summarization"
+        ],
+        "outcome": "Contextualized embeddings for long sequences.",
+        "benchmark_metrics": [
+          "F1 on long-document tasks",
+          "Memory usage"
+        ],
+        "metadata": {
+          "frameworks_classes": [
+            "HuggingFace Transformers"
+          ],
+          "key_hyperparameters": [
+            "attention_window",
+            "global_attention_mask"
+          ],
+          "computational_complexity": [
+            "O(L) linear scaling with sequence length"
+          ],
+          "pros": [
+            "Handles documents up to 16,384+ tokens",
+            "Linear memory footprint"
+          ],
+          "cons": [
+            "Global attention tokens must be carefully selected",
+            "Less effective for short text"
+          ]
+        }
+      },
+      {
+        "index": 386,
+        "algorithm_name": "Switch Transformer (Mixture of Experts)",
+        "category": "Deep Learning / LLM",
+        "eli5": "A giant neural network with many 'expert' sub-brains, where a router instantly sends each word to only the one specific expert best suited to handle it, making it huge but fast.",
+        "purpose": "Scales Transformer models to trillions of parameters by replacing the dense feed-forward network with a sparse Mixture-of-Experts (MoE) layer, routing tokens to a single expert.",
+        "input_dataset": "Massive web-scale text corpora.",
+        "usecase_scenarios": [
+          "Foundation model training",
+          "Scaling LLMs efficiently"
+        ],
+        "outcome": "Highly capable, sparsely activated language model.",
+        "benchmark_metrics": [
+          "Perplexity",
+          "Compute efficiency (FLOPs vs Parameters)"
+        ],
+        "metadata": {
+          "frameworks_classes": [
+            "HuggingFace Transformers (MoE)",
+            "JAX/Flax"
+          ],
+          "key_hyperparameters": [
+            "num_experts",
+            "expert_capacity",
+            "router_noise"
+          ],
+          "computational_complexity": [
+            "O(P_active) where P_active << P_total"
+          ],
+          "pros": [
+            "Massive parameter count with fast inference",
+            "State-of-the-art scaling laws"
+          ],
+          "cons": [
+            "Requires massive distributed VRAM",
+            "Prone to load-balancing issues among experts"
+          ]
+        }
+      },
+      {
+        "index": 387,
+        "algorithm_name": "PAC Learning (Probably Approximately Correct)",
+        "category": "Statistical Learning Theory",
+        "eli5": "The mathematical proof that if you give a computer enough examples, it can probably learn a rule that is approximately correct, defining the absolute limits of what machines can learn.",
+        "purpose": "A framework for mathematical analysis of machine learning that defines the conditions under which a learning algorithm can output an approximately correct hypothesis with high probability.",
+        "input_dataset": "Theoretical data distributions.",
+        "usecase_scenarios": [
+          "Bounding sample complexity",
+          "Theoretical ML research"
+        ],
+        "outcome": "Sample complexity bounds and learnability guarantees.",
+        "benchmark_metrics": [
+          "Epsilon (error bound)",
+          "Delta (confidence)"
+        ],
+        "metadata": {
+          "frameworks_classes": [
+            "Theoretical Math"
+          ],
+          "key_hyperparameters": [
+            "N/A"
+          ],
+          "computational_complexity": [
+            "Polynomial time (for PAC-learnable classes)"
+          ],
+          "pros": [
+            "Rigorous foundation for ML",
+            "Defines efficiency bounds"
+          ],
+          "cons": [
+            "Bounds are often overly pessimistic for modern deep learning"
+          ]
+        }
+      },
+      {
+        "index": 388,
+        "algorithm_name": "Vapnik-Chervonenkis (VC) Dimension",
+        "category": "Statistical Learning Theory",
+        "eli5": "A measure of a model's 'imagination' or capacity; it's the maximum number of data points the model can perfectly memorize in every possible shatter-pattern, proving if it will overfit.",
+        "purpose": "Defines the capacity of a classification algorithm as the cardinality of the largest set of points that the algorithm can shatter (classify in all possible 2^N ways).",
+        "input_dataset": "Hypothesis space of a model.",
+        "usecase_scenarios": [
+          "Generalization bounds",
+          "SVM theory",
+          "Model complexity analysis"
+        ],
+        "outcome": "Integer representing model capacity.",
+        "benchmark_metrics": [
+          "VC Dimension (h)"
+        ],
+        "metadata": {
+          "frameworks_classes": [
+            "Theoretical Math"
+          ],
+          "key_hyperparameters": [
+            "N/A"
+          ],
+          "computational_complexity": [
+            "N/A (Theoretical property)"
+          ],
+          "pros": [
+            "Provides worst-case generalization bounds",
+            "Foundational to SVM margin theory"
+          ],
+          "cons": [
+            "Infinite for many modern models (e.g., 1-NN, deep NNs)",
+            "Bounds are too loose for practice"
+          ]
+        }
+      },
+      {
+        "index": 389,
+        "algorithm_name": "Rademacher Complexity",
+        "category": "Statistical Learning Theory",
+        "eli5": "Testing how well a model can memorize pure, random noise; if it can perfectly fit random coin flips, its complexity is too high and it will definitely overfit real data.",
+        "purpose": "Measures the richness of a hypothesis class by evaluating its ability to fit random noise (Rademacher variables), providing tighter, data-dependent generalization bounds than VC dimension.",
+        "input_dataset": "Empirical data samples and hypothesis class.",
+        "usecase_scenarios": [
+          "Analyzing neural network generalization",
+          "Regularization theory"
+        ],
+        "outcome": "Scalar complexity measure.",
+        "benchmark_metrics": [
+          "Empirical Rademacher Complexity"
+        ],
+        "metadata": {
+          "frameworks_classes": [
+            "Theoretical Math"
+          ],
+          "key_hyperparameters": [
+            "N/A"
+          ],
+          "computational_complexity": [
+            "N/A (Theoretical property)"
+          ],
+          "pros": [
+            "Data-dependent (tighter bounds than VC)",
+            "Applies to real-valued functions"
+          ],
+          "cons": [
+            "Mathematically difficult to compute exactly for complex models"
+          ]
+        }
+      },
+      {
+        "index": 390,
+        "algorithm_name": "Structural Risk Minimization (SRM)",
+        "category": "Statistical Learning Theory",
+        "eli5": "The strategy of picking a model that balances doing well on the training data while actively punishing the model for being too complex, preventing overfitting.",
+        "purpose": "An inductive principle that minimizes the upper bound on the generalization error by balancing empirical risk (training error) with a regularization term based on model complexity (VC dimension).",
+        "input_dataset": "Training data and hypothesis space.",
+        "usecase_scenarios": [
+          "SVM formulation",
+          "Regularization design"
+        ],
+        "outcome": "Optimal model complexity and parameters.",
+        "benchmark_metrics": [
+          "Generalization Bound"
+        ],
+        "metadata": {
+          "frameworks_classes": [
+            "Theoretical Math",
+            "sklearn.svm.SVC (C parameter)"
+          ],
+          "key_hyperparameters": [
+            "Complexity penalty (e.g., C, lambda)"
+          ],
+          "computational_complexity": [
+            "Depends on optimization algorithm"
+          ],
+          "pros": [
+            "Theoretical justification for regularization",
+            "Prevents overfitting"
+          ],
+          "cons": [
+            "Requires knowing or bounding model capacity"
+          ]
+        }
+      },
+      {
+        "index": 391,
+        "algorithm_name": "Empirical Risk Minimization (ERM)",
+        "category": "Statistical Learning Theory",
+        "eli5": "The basic strategy of just picking the model that makes the fewest mistakes on the training data you currently have, which often leads to overfitting if not regularized.",
+        "purpose": "The principle of choosing a hypothesis that minimizes the average loss over the training set, assuming the training set is a perfect representation of the true data distribution.",
+        "input_dataset": "Training data.",
+        "usecase_scenarios": [
+          "Standard supervised learning training loops",
+          "Loss function optimization"
+        ],
+        "outcome": "Model parameters minimizing training loss.",
+        "benchmark_metrics": [
+          "Training Loss"
+        ],
+        "metadata": {
+          "frameworks_classes": [
+            "All ML frameworks (PyTorch, TF, sklearn)"
+          ],
+          "key_hyperparameters": [
+            "Loss function choice"
+          ],
+          "computational_complexity": [
+            "Depends on optimization algorithm"
+          ],
+          "pros": [
+            "Simple",
+            "Directly optimizes observed data"
+          ],
+          "cons": [
+            "Guaranteed to overfit if hypothesis space is rich enough (requires SRM/Regularization)"
+          ]
+        }
+      },
+      {
+        "index": 392,
+        "algorithm_name": "Representer Theorem",
+        "category": "Kernel Methods / Math Foundations",
+        "eli5": "The mathematical guarantee that when using the Kernel Trick, you only ever need to combine the training data points to find the perfect boundary, you don't need to invent new imaginary points.",
+        "purpose": "States that any minimizer of a regularized empirical risk function in a Reproducing Kernel Hilbert Space (RKHS) can be expressed as a finite linear combination of the kernel evaluations at the training points.",
+        "input_dataset": "Kernel matrices and training data.",
+        "usecase_scenarios": [
+          "SVM dual formulation",
+          "Kernel Ridge Regression",
+          "Gaussian Processes"
+        ],
+        "outcome": "Theoretical justification for dual optimization.",
+        "benchmark_metrics": [
+          "N/A (Theoretical property)"
+        ],
+        "metadata": {
+          "frameworks_classes": [
+            "Theoretical Math"
+          ],
+          "key_hyperparameters": [
+            "N/A"
+          ],
+          "computational_complexity": [
+            "Reduces infinite-dimensional optimization to N-dimensional"
+          ],
+          "pros": [
+            "Makes kernel methods computationally feasible",
+            "Foundation of SVMs"
+          ],
+          "cons": [
+            "Requires strictly monotonic regularization"
+          ]
+        }
+      },
+      {
+        "index": 393,
+        "algorithm_name": "Locality-Sensitive Hashing (LSH)",
+        "category": "Dimensionality Reduction / Search",
+        "eli5": "A clever filing system that intentionally throws similar items into the exact same messy bucket, so when you look for something, you only have to search that one bucket instead of the whole warehouse.",
+        "purpose": "An algorithmic technique that hashes input items so that similar items map to the same 'buckets' with high probability, enabling sub-linear time approximate nearest neighbor searches.",
+        "input_dataset": "High-dimensional vectors (e.g., embeddings, images).",
+        "usecase_scenarios": [
+          "Massive-scale image search",
+          "Plagiarism detection",
+          "Recommender systems"
+        ],
+        "outcome": "Hash buckets containing similar items.",
+        "benchmark_metrics": [
+          "Recall@K",
+          "Query Latency"
+        ],
+        "metadata": {
+          "frameworks_classes": [
+            "datasketch",
+            "FAISS (LSH index)"
+          ],
+          "key_hyperparameters": [
+            "num_hash_tables",
+            "num_hash_functions"
+          ],
+          "computational_complexity": [
+            "Sub-linear O(N^rho) where rho < 1"
+          ],
+          "pros": [
+            "Scales to billions of vectors",
+            "Extremely fast query times"
+          ],
+          "cons": [
+            "Requires massive memory for hash tables",
+            "Approximate (can miss exact neighbors)"
+          ]
+        }
+      },
+      {
+        "index": 394,
+        "algorithm_name": "Hierarchical Navigable Small World (HNSW)",
+        "category": "Approximate Nearest Neighbors",
+        "eli5": "Building a series of express highways and local streets over your data, so you can instantly jump across the country to the right neighborhood, then zoom in to the exact house you're looking for.",
+        "purpose": "A graph-based algorithm for approximate nearest neighbor search that builds a multi-layered hierarchy of proximity graphs, achieving state-of-the-art speed and recall.",
+        "input_dataset": "High-dimensional vectors.",
+        "usecase_scenarios": [
+          "Vector databases (Pinecone, Milvus)",
+          "Real-time semantic search"
+        ],
+        "outcome": "Approximate nearest neighbors in logarithmic time.",
+        "benchmark_metrics": [
+          "Recall vs QPS (Queries Per Second)",
+          "Memory footprint"
+        ],
+        "metadata": {
+          "frameworks_classes": [
+            "hnswlib",
+            "FAISS"
+          ],
+          "key_hyperparameters": [
+            "M (connections per node)",
+            "ef_construction",
+            "ef_search"
+          ],
+          "computational_complexity": [
+            "O(log N) query time"
+          ],
+          "pros": [
+            "Best-in-class recall/speed tradeoff",
+            "Highly scalable"
+          ],
+          "cons": [
+            "High memory overhead for graph storage",
+            "Slow index building time"
+          ]
+        }
+      },
+      {
+        "index": 395,
+        "algorithm_name": "PHATE (Potential of Heat-diffusion for Affinity-based Transition Embedding)",
+        "category": "Manifold Learning / Visualization",
+        "eli5": "Mapping biological or complex data by simulating how heat diffuses through it, perfectly preserving both the local clusters and the smooth, continuous trajectories connecting them.",
+        "purpose": "A dimensionality reduction method designed to visualize both local and global structures in high-dimensional data, particularly continuous trajectories like cellular differentiation.",
+        "input_dataset": "High-dimensional biological or trajectory data.",
+        "usecase_scenarios": [
+          "Single-cell RNA sequencing visualization",
+          "Developmental biology",
+          "Manifold learning"
+        ],
+        "outcome": "2D/3D embedding preserving trajectories.",
+        "benchmark_metrics": [
+          "Distance correlation",
+          "Trajectory preservation"
+        ],
+        "metadata": {
+          "frameworks_classes": [
+            "phate"
+          ],
+          "key_hyperparameters": [
+            "knn",
+            "t (diffusion time)",
+            "gamma"
+          ],
+          "computational_complexity": [
+            "O(N^2) or O(N log N) with approximations"
+          ],
+          "pros": [
+            "Reveals continuous transitions and branches",
+            "Preserves global geometry better than t-SNE"
+          ],
+          "cons": [
+            "Computationally heavy for massive datasets",
+            "Requires tuning of diffusion time"
+          ]
+        }
+      },
+      {
+        "index": 396,
+        "algorithm_name": "Robust Random Cut Forest (RRCF)",
+        "category": "Anomaly Detection / Streaming",
+        "eli5": "Building random trees on streaming data where anomalies stick out like long, lonely branches, allowing you to spot weird events in real-time without retraining the whole forest.",
+        "purpose": "An online anomaly detection algorithm that builds an ensemble of random cut trees, where the collusive displacement (CoDisp) of a point measures its anomalousness based on tree structure changes.",
+        "input_dataset": "Streaming multidimensional time-series or tabular data.",
+        "usecase_scenarios": [
+          "Real-time IT system monitoring",
+          "IoT sensor anomaly detection",
+          "AWS Lookout for Metrics"
+        ],
+        "outcome": "Real-time anomaly scores.",
+        "benchmark_metrics": [
+          "Average Precision",
+          "Detection Latency"
+        ],
+        "metadata": {
+          "frameworks_classes": [
+            "rrcf"
+          ],
+          "key_hyperparameters": [
+            "num_trees",
+            "tree_size",
+            "shingle_size"
+          ],
+          "computational_complexity": [
+            "O(log N) per insertion/deletion"
+          ],
+          "pros": [
+            "Natively handles streaming data",
+            "No distance metric required",
+            "Explainable via tree structure"
+          ],
+          "cons": [
+            "Sensitive to shingle size for time-series",
+            "Memory intensive for large forests"
+          ]
+        }
+      },
+      {
+        "index": 397,
+        "algorithm_name": "Matrix Profile",
+        "category": "Time Series Analysis",
+        "eli5": "Scanning a massive time-series signal to instantly find every repeating pattern (motif) and every bizarre, never-before-seen glitch (discord) without needing any predefined rules.",
+        "purpose": "A data structure and suite of algorithms that computes the distance between every subsequence in a time series and its nearest neighbor, enabling exact motif and discord discovery.",
+        "input_dataset": "Massive 1D or multi-dimensional time-series data.",
+        "usecase_scenarios": [
+          "Seismology",
+          "ECG/EEG anomaly detection",
+          "Predictive maintenance"
+        ],
+        "outcome": "Vector of nearest-neighbor distances and indices.",
+        "benchmark_metrics": [
+          "Motif discovery accuracy",
+          "Compute time"
+        ],
+        "metadata": {
+          "frameworks_classes": [
+            "stumpy",
+            "matrixprofile-ts"
+          ],
+          "key_hyperparameters": [
+            "m (subsequence window size)"
+          ],
+          "computational_complexity": [
+            "O(N^2) naive, O(N log N) with STOMP/STAMP"
+          ],
+          "pros": [
+            "Parameter-free (except window size)",
+            "Exact and highly scalable",
+            "Domain agnostic"
+          ],
+          "cons": [
+            "Computationally heavy for very long sequences without GPU",
+            "Requires stationary or detrended data"
+          ]
+        }
+      },
+      {
+        "index": 398,
+        "algorithm_name": "Dynamic Time Warping Barycenter Averaging (DBA)",
+        "category": "Time Series Analysis",
+        "eli5": "Taking dozens of squiggly, misaligned time-series signals and perfectly averaging them into one single, crisp 'master' signal by stretching and compressing their timelines first.",
+        "purpose": "An iterative global averaging technique that aligns a set of time-series sequences using DTW and computes a representative average sequence that preserves temporal features.",
+        "input_dataset": "Collection of time-series sequences of varying lengths or phases.",
+        "usecase_scenarios": [
+          "Time-series clustering centroids",
+          "Signal processing",
+          "Gesture recognition templates"
+        ],
+        "outcome": "A single, aligned representative time-series.",
+        "benchmark_metrics": [
+          "Intra-cluster variance",
+          "Alignment cost"
+        ],
+        "metadata": {
+          "frameworks_classes": [
+            "tslearn",
+            "dtw-python"
+          ],
+          "key_hyperparameters": [
+            "max_iter",
+            "tol"
+          ],
+          "computational_complexity": [
+            "O(I * N * L^2) where I is iterations, N is sequences, L is length"
+          ],
+          "pros": [
+            "Produces sharp, meaningful averages",
+            "Handles temporal misalignment perfectly"
+          ],
+          "cons": [
+            "Computationally expensive",
+            "Can get stuck in local minima"
+          ]
+        }
+      },
+      {
+        "index": 399,
+        "algorithm_name": "Procrustes Analysis",
+        "category": "Shape Analysis / Alignment",
+        "eli5": "Taking two different shapes or point clouds and mathematically rotating, scaling, and shifting them until they overlap as perfectly as possible, like fitting a glass slipper.",
+        "purpose": "A form of statistical shape analysis used to analyze the distribution of a set of shapes by translating, rotating, and scaling them to minimize the sum of squared distances between corresponding points.",
+        "input_dataset": "Matrices of landmark coordinates or embeddings.",
+        "usecase_scenarios": [
+          "Aligning word embeddings across languages",
+          "Biological morphometrics",
+          "Point cloud registration"
+        ],
+        "outcome": "Optimally aligned shapes and Procrustes distance.",
+        "benchmark_metrics": [
+          "Procrustes Distance",
+          "Alignment Error"
+        ],
+        "metadata": {
+          "frameworks_classes": [
+            "scipy.spatial.procrustes",
+            "sklearn.cross_decomposition"
+          ],
+          "key_hyperparameters": [
+            "N/A"
+          ],
+          "computational_complexity": [
+            "O(M^3) for SVD of covariance matrix"
+          ],
+          "pros": [
+            "Mathematically optimal alignment",
+            "Removes translation/rotation/scale variance"
+          ],
+          "cons": [
+            "Requires 1-to-1 point correspondence",
+            "Sensitive to outlier landmarks"
+          ]
+        }
+      },
+      {
+        "index": 400,
+        "algorithm_name": "Leave-One-Out Cross-Validation (LOOCV)",
+        "category": "Model Evaluation",
+        "eli5": "Testing a student by giving them the final exam 100 times, each time hiding exactly one question from their study guide to see if they truly learned the concept or just memorized the guide.",
+        "purpose": "A special case of K-Fold cross-validation where K equals the number of data points, training on N-1 samples and validating on the single left-out sample, repeated N times.",
+        "input_dataset": "Very small datasets.",
+        "usecase_scenarios": [
+          "Micro-biology datasets",
+          "Expensive-to-label data",
+          "Unbiased error estimation"
+        ],
+        "outcome": "Nearly unbiased estimate of the true test error.",
+        "benchmark_metrics": [
+          "Mean LOOCV Error",
+          "Variance of LOOCV Error"
+        ],
+        "metadata": {
+          "frameworks_classes": [
+            "sklearn.model_selection.LeaveOneOut"
+          ],
+          "key_hyperparameters": [
+            "N/A"
+          ],
+          "computational_complexity": [
+            "O(N * Cost of training)"
+          ],
+          "pros": [
+            "Unbiased error estimate",
+            "Maximizes training data usage"
+          ],
+          "cons": [
+            "Computationally prohibitive for large N",
+            "High variance in the error estimate compared to 10-fold CV"
+          ]
+        }
       }
     ]
   }
