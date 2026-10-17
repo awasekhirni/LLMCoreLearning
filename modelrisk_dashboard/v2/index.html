@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>β ORI Inc. Canada — AI Model Risk Periodic Table Dashboard</title>
+  <meta name="description" content="A structured, data-driven map of the core risks across enterprise AI systems." />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ============ HEADER ============ -->
+  <header class="site-header">
+    <div class="site-header-inner">
+      <a href="#" class="logo" aria-label="beta ORI home">
+        <img src="./images/transparent_betaORI_logo.png" alt="beta ORI logo" class="logo-img" fetchpriority="high">
+      </a>
+
+      <nav class="site-nav" aria-label="Primary">
+        <a href="#" class="nav-link active" aria-current="page">Dashboard</a>
+        <a href="#catalog" class="nav-link">Catalog</a>
+        <a href="#matrix" class="nav-link">Matrix</a>
+        <a href="#" class="nav-link">Reports</a>
+        <a href="#" class="nav-link">Playbooks</a>
+      </nav>
+
+      <div class="header-actions">
+        <div class="search" role="search">
+          <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/>
+            <path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <input type="search" id="search-input" class="search-input"
+                 placeholder="Search risks, owners, tags…" autocomplete="off" spellcheck="false"
+                 aria-keyshortcuts="/" aria-label="Search risks" />
+          <button type="button" class="search-clear" id="search-clear" aria-label="Clear search" hidden>×</button>
+          <kbd class="search-kbd" id="search-kbd">/</kbd>
+        </div>
+
+        <div class="menu" data-menu>
+          <button class="icon-btn" type="button" aria-haspopup="true" aria-expanded="false" title="Export">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <ul class="menu-list" role="menu">
+            <li><button type="button" role="menuitem" data-export="json">Export as JSON</button></li>
+            <li><button type="button" role="menuitem" data-export="csv">Export as CSV</button></li>
+            <li><button type="button" role="menuitem" data-export="print">Print / Save PDF</button></li>
+          </ul>
+        </div>
+
+        <button class="icon-btn theme-toggle" type="button" id="theme-toggle" aria-label="Toggle dark mode" title="Toggle theme">
+          <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+        </button>
+
+        <button class="avatar" type="button" aria-label="Account menu" title="Signed in as AK">AK</button>
+
+        <button class="icon-btn mobile-menu-btn" type="button" id="mobile-menu-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-nav">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <nav class="mobile-nav" id="mobile-nav" aria-label="Mobile navigation" hidden>
+      <a href="#" class="nav-link active">Dashboard</a>
+      <a href="#catalog" class="nav-link">Catalog</a>
+      <a href="#matrix" class="nav-link">Matrix</a>
+      <a href="#" class="nav-link">Reports</a>
+      <a href="#" class="nav-link">Playbooks</a>
+    </nav>
+  </header>
+
+  <!-- ============ MAIN ============ -->
+  <main class="app">
+    <section class="page-heading">
+      <h1>The AI Model <span class="accent">Risk Periodic</span> Table</h1>
+      <p class="subtitle">A structured, data-driven map of the core risks across enterprise AI systems.</p>
+    </section>
+
+    <!-- KPI STRIP -->
+    <section class="kpi-strip" aria-label="Key risk indicators">
+      <div class="kpi">
+        <span class="kpi-label">Total risks</span>
+        <span class="kpi-value" id="kpi-total">—</span>
+        <span class="kpi-sub" id="kpi-shown">—</span>
+      </div>
+      <div class="kpi sev-critical">
+        <span class="kpi-label">Critical</span>
+        <span class="kpi-value" id="kpi-critical">—</span>
+        <span class="kpi-sub">score &gt; 90 · shown</span>
+      </div>
+      <div class="kpi sev-high">
+        <span class="kpi-label">High</span>
+        <span class="kpi-value" id="kpi-high">—</span>
+        <span class="kpi-sub">score 76–90 · shown</span>
+      </div>
+      <div class="kpi">
+        <span class="kpi-label">Average score</span>
+        <span class="kpi-value" id="kpi-avg">—</span>
+        <span class="kpi-sub">across shown risks</span>
+      </div>
+      <div class="kpi sev-safe">
+        <span class="kpi-label">Mitigated</span>
+        <span class="kpi-value" id="kpi-mitigated">—</span>
+        <span class="kpi-sub" id="kpi-mitigated-pct">—</span>
+      </div>
+
+      <div class="kpi distribution" aria-label="Severity distribution">
+        <span class="kpi-label">Distribution</span>
+        <div class="dist-bar" id="dist-bar" role="img" aria-label="Severity distribution bar"></div>
+        <div class="dist-legend">
+          <span><i class="dist-dot sev-safe"></i>safe</span>
+          <span><i class="dist-dot sev-low"></i>low</span>
+          <span><i class="dist-dot sev-medium"></i>medium</span>
+          <span><i class="dist-dot sev-high"></i>high</span>
+          <span><i class="dist-dot sev-critical"></i>critical</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- LEGEND -->
+    <div class="legend" aria-label="Category legend">
+      <span class="legend-item"><span class="legend-dot data"></span>Data Risks</span>
+      <span class="legend-item"><span class="legend-dot model"></span>Model Risks</span>
+      <span class="legend-item"><span class="legend-dot agent"></span>Agent Risks</span>
+      <span class="legend-item"><span class="legend-dot security"></span>Security &amp; Ops</span>
+      <span class="legend-item"><span class="legend-dot governance"></span>Governance</span>
+    </div>
+
+    <!-- TOOLBAR -->
+    <section class="toolbar" aria-label="Filters and view controls">
+      <div class="view-toggle" role="group" aria-label="View mode">
+        <button class="view-btn active" data-view="grid" aria-pressed="true">Grid</button>
+        <button class="view-btn" data-view="matrix" aria-pressed="false">Risk Matrix</button>
+      </div>
+
+      <div class="chips" role="group" aria-label="Category filter">
+        <button class="chip active" data-category="all">All</button>
+        <button class="chip" data-category="Data">Data</button>
+        <button class="chip" data-category="Model">Model</button>
+        <button class="chip" data-category="Agent">Agent</button>
+        <button class="chip" data-category="Security">Security</button>
+        <button class="chip" data-category="Governance">Governance</button>
+      </div>
+
+      <div class="selects">
+        <label>Severity
+          <select id="filter-severity">
+            <option value="all">All</option>
+            <option value="critical">Critical</option>
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+            <option value="safe">Safe</option>
+          </select>
+        </label>
+        <label>Owner <select id="filter-owner"><option value="all">All</option></select></label>
+        <label>Status
+          <select id="filter-status">
+            <option value="all">All</option>
+            <option value="open">Open</option>
+            <option value="in_progress">In progress</option>
+            <option value="mitigated">Mitigated</option>
+          </select>
+        </label>
+        <label>Sort
+          <select id="sort-by">
+            <option value="score-desc">Score ↓</option>
+            <option value="score-asc">Score ↑</option>
+            <option value="likelihood-desc">Likelihood ↓</option>
+            <option value="impact-desc">Impact ↓</option>
+            <option value="name-asc">Name A–Z</option>
+          </select>
+        </label>
+        <button id="reset-filters" class="reset-btn" type="button">Reset</button>
+      </div>
+
+      <div class="status-line" id="status-line" aria-live="polite"></div>
+    </section>
+
+    <!-- VIEWS -->
+    <section id="grid-view" class="view-panel">
+      <div id="periodic-table" class="periodic-table"></div>
+    </section>
+
+    <section id="matrix-view" class="view-panel" hidden>
+      <div class="matrix-wrap">
+        <div id="risk-matrix" class="risk-matrix" role="region" aria-label="Risk matrix, likelihood vs impact"></div>
+      </div>
+      <div class="matrix-legend">
+        <span>Dot size = risk score</span>
+        <span>·</span>
+        <span>Quadrants: <strong>Act Now</strong> · <strong>Plan</strong> · <strong>Monitor</strong> · <strong>Accept</strong></span>
+      </div>
+    </section>
+
+    <!-- EMPTY STATE (outside the views so it works for both) -->
+    <div id="empty-state" class="empty-state" hidden>
+      <div class="empty-icon" aria-hidden="true">∅</div>
+      <h3>No risks match those filters</h3>
+      <p>Try widening the category, severity, owner, or search query.</p>
+      <button class="reset-btn" type="button" id="empty-reset">Clear all filters</button>
+    </div>
+  </main>
+
+  <!-- DRAWER -->
+  <aside id="drawer" class="drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-title">
+    <div class="drawer-backdrop" id="drawer-backdrop"></div>
+    <div class="drawer-panel" id="drawer-panel">
+      <button class="drawer-close" id="drawer-close" type="button" aria-label="Close details">×</button>
+      <div id="drawer-content"></div>
+    </div>
+  </aside>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="site-footer">
+    <div class="site-footer-inner">
+      <div class="footer-col footer-brand">
+        <a class="logo" href="#" aria-label="AI Risk Periodic Table — home">
+          <img src="./images/transparent_betaORI_logo.png" alt="beta ORI logo" class="logo-img" loading="lazy">
+        </a>
+        <p class="footer-tagline">
+            AI system failures are usually systemic, not model-specific: they emerge when gaps in data, model design, agent orchestration, security, and governance align and amplify each other.
+        </p>
+        <div class="footer-badges">
+          <span class="badge">NIST AI RMF</span>
+          <span class="badge">ISO/IEC 42001</span>
+          <span class="badge">EU AI Act</span>
+          <span class="badge">OWASP LLM</span>
+        </div>
+      </div>
+
+      <div class="footer-col">
+        <h4>Product</h4>
+        <ul>
+          <li><a href="#">Risk Catalog</a></li>
+          <li><a href="#matrix">Risk Matrix</a></li>
+          <li><a href="#">Reports</a></li>
+          <li><a href="#">Playbooks</a></li>
+          <li><a href="#">API Reference</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>Resources</h4>
+        <ul>
+          <li><a href="#">Getting Started</a></li>
+          <li><a href="#">Scoring Model</a></li>
+          <li><a href="#">Framework Mapping</a></li>
+          <li><a href="#">Changelog</a></li>
+          <li><a href="#">Status</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>Company</h4>
+        <ul>
+          <li><a href="http://www.betaori.com">About</a></li>
+          <li><a href="#">Security</a></li>
+          <li><a href="#">Careers</a></li>
+          <li><a href="#">Contact</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>Legal</h4>
+        <ul>
+          <li><a href="#">Privacy</a></li>
+          <li><a href="#">Terms</a></li>
+          <li><a href="#">Compliance</a></li>
+          <li><a href="#">DPA</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <span>© <span id="footer-year">2026 Beta ORI Inc. All Rights Reserved.</span> AI Model Risk Periodic Table - MVP. Awase Khirni Syed</span>
+      <span class="footer-dot">·</span>
+      <span id="footer-version">v1.2.0</span>
+      <span class="footer-dot">·</span>
+      <span id="footer-updated">Last updated —</span>
+      <span class="footer-dot">·</span>
+      <span id="footer-scoring">score = (likelihood/5·100)·0.4 + (impact/5·100)·0.6</span>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
