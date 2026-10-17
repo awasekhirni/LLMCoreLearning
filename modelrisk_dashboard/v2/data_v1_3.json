@@ -1,0 +1,5406 @@
+{
+  "meta": {
+    "version": "1.3.0",
+    "last_updated": "2026-10-17T10:00:00Z",
+    "thresholds": {
+      "safe": 25,
+      "low": 50,
+      "medium": 75,
+      "high": 90,
+      "critical": 100
+    },
+    "scoring_model": "inherent_score = (likelihood/5*100)*0.4 + (impact/5*100)*0.6",
+    "control_effectiveness_model": "effectiveness_score = round(0.4*implementation_pct + 0.4*test_pass_rate_pct + 0.2*evidence_coverage_pct); residual_score = round(inherent_score * (1 - effectiveness_score/100))",
+    "predictive_model": "predictive_score = min(100, round(residual_score * exposure_multiplier * (1 + velocity_uplift) * confidence_weight))",
+    "dimensions": [
+      "risk_velocity",
+      "control_effectiveness",
+      "detection_response",
+      "exposure",
+      "assurance",
+      "leading_indicators",
+      "agentic_controls",
+      "governance_health",
+      "compliance",
+      "incidents",
+      "confidence",
+      "dependency",
+      "predictive"
+    ],
+    "kpi_definitions": {
+      "risk_velocity": "Rate/direction of risk score change to predict emerging risk before threshold breach.",
+      "control_effectiveness": "Implementation, test pass rate, and evidence coverage to compute residual risk.",
+      "detection_response": "MTTD, MTTR, alert coverage, rollback time, and dry-run success to predict incident duration/recoverability.",
+      "exposure": "Affected systems/records/users, sensitivity, external exposure, privilege, and autonomy tier to predict blast radius.",
+      "assurance": "Eval, red-team, framework mapping, evidence freshness, and independent validation to predict assurance gaps.",
+      "leading_indicators": "Category-specific early-warning signals (data drift, DQ, hallucination, injection, agent controls).",
+      "agentic_controls": "Tool allowlists, approval gates, step budgets, permission scope, and loop detection for agentic risk.",
+      "governance_health": "Review overdue days, owner load, RACI coverage, sign-off SLA, and audit closure to predict process failure.",
+      "compliance": "Control mapping, compliance test pass rate, and regulatory-change impact to predict compliance breach likelihood.",
+      "incidents": "Incidents, near-misses, repeat rate, and root-cause closure to predict recurrence.",
+      "confidence": "Assessment confidence, evidence completeness, and source count to weight predictions.",
+      "dependency": "Criticality, third-party SPOF, and correlated tags to predict systemic/correlated risk.",
+      "predictive": "Computed exposure multiplier, velocity uplift, confidence weight, predictive score, and predictive band."
+    }
+  },
+  "risks": [
+    {
+      "id": "AI-R-001",
+      "symbol": "BS",
+      "name": "Bias",
+      "description": "Unfair or skewed outputs.",
+      "category": "Data",
+      "likelihood": 3,
+      "impact": 4,
+      "score": 72,
+      "trend": "up",
+      "mitigation_status": "in_progress",
+      "owner": "Data Governance",
+      "mitigations": [
+        "Bias audits",
+        "Fairness metrics",
+        "Dataset stratification"
+      ],
+      "references": [
+        "NIST AI RMF MAP 1.1",
+        "ISO/IEC 42001 6.1.2"
+      ],
+      "tags": [
+        "fairness",
+        "regulatory"
+      ],
+      "last_reviewed": "2026-09-14",
+      "risk_velocity": {
+        "score_delta_30d": 5,
+        "score_delta_90d": 11,
+        "momentum": "accelerating",
+        "days_since_change": 6
+      },
+      "control_effectiveness": {
+        "implementation_pct": 60,
+        "test_pass_rate_pct": 55,
+        "evidence_coverage_pct": 70,
+        "effectiveness_score": 60,
+        "residual_score": 29
+      },
+      "detection_response": {
+        "mttd_hours": 12,
+        "mttr_hours": 24,
+        "alert_coverage_pct": 80,
+        "rollback_time_hours": 6,
+        "dry_run_success_pct": 90
+      },
+      "exposure": {
+        "affected_systems": 4,
+        "affected_records": 250000,
+        "affected_users": 50000,
+        "data_sensitivity": "medium",
+        "external_facing": false,
+        "privilege_level": "low",
+        "autonomy_tier": 0
+      },
+      "assurance": {
+        "eval_coverage_pct": 70,
+        "red_team_coverage_pct": 40,
+        "framework_mapping_pct": 85,
+        "evidence_freshness_days": 20,
+        "independent_validation": false
+      },
+      "leading_indicators": {
+        "bias_audit_pass_pct": 72,
+        "dq_pass_rate_pct": 88,
+        "drift_psi": 0.12,
+        "lineage_coverage_pct": 70
+      },
+      "agentic_controls": null,
+      "governance_health": {
+        "review_overdue_days": 2,
+        "owner_risk_load": 5,
+        "raci_coverage_pct": 80,
+        "signoff_sla_breach_pct": 8,
+        "audit_finding_closure_pct": 85
+      },
+      "compliance": {
+        "control_mapping_pct": 85,
+        "compliance_test_pass_pct": 80,
+        "regulatory_change_impact": "medium"
+      },
+      "incidents": {
+        "incidents_90d": 1,
+        "near_misses_90d": 2,
+        "repeat_incident_rate_pct": 5,
+        "root_cause_closure_pct": 85
+      },
+      "confidence": {
+        "assessment_confidence_pct": 80,
+        "evidence_completeness_pct": 75,
+        "source_count": 4
+      },
+      "dependency": {
+        "criticality": "high",
+        "third_party_spof": false,
+        "correlated_tags": [
+          "fairness",
+          "regulatory"
+        ]
+      },
+      "predictive": {
+        "exposure_multiplier": 1.15,
+        "velocity_uplift": 0.2,
+        "confidence_weight": 0.8,
+        "predictive_score": 32,
+        "predictive_band": "low"
+      }
+    },
+    {
+      "id": "AI-R-002",
+      "symbol": "PV",
+      "name": "Privacy",
+      "description": "Sensitive data exposure.",
+      "category": "Data",
+      "likelihood": 2,
+      "impact": 4,
+      "score": 64,
+      "trend": "flat",
+      "mitigation_status": "open",
+      "owner": "Privacy Office",
+      "mitigations": [
+        "PII redaction",
+        "Data minimization",
+        "Consent tracking"
+      ],
+      "references": [
+        "GDPR Art. 5",
+        "NIST Privacy Framework"
+      ],
+      "tags": [
+        "privacy",
+        "compliance"
+      ],
+      "last_reviewed": "2026-08-30",
+      "risk_velocity": {
+        "score_delta_30d": 1,
+        "score_delta_90d": 2,
+        "momentum": "stable",
+        "days_since_change": 18
+      },
+      "control_effectiveness": {
+        "implementation_pct": 40,
+        "test_pass_rate_pct": 45,
+        "evidence_coverage_pct": 60,
+        "effectiveness_score": 46,
+        "residual_score": 35
+      },
+      "detection_response": {
+        "mttd_hours": 18,
+        "mttr_hours": 36,
+        "alert_coverage_pct": 75,
+        "rollback_time_hours": 10,
+        "dry_run_success_pct": 85
+      },
+      "exposure": {
+        "affected_systems": 3,
+        "affected_records": 500000,
+        "affected_users": 120000,
+        "data_sensitivity": "high",
+        "external_facing": true,
+        "privilege_level": "medium",
+        "autonomy_tier": 0
+      },
+      "assurance": {
+        "eval_coverage_pct": 60,
+        "red_team_coverage_pct": 35,
+        "framework_mapping_pct": 75,
+        "evidence_freshness_days": 28,
+        "independent_validation": false
+      },
+      "leading_indicators": {
+        "bias_audit_pass_pct": 80,
+        "dq_pass_rate_pct": 82,
+        "drift_psi": 0.08,
+        "lineage_coverage_pct": 60
+      },
+      "agentic_controls": null,
+      "governance_health": {
+        "review_overdue_days": 12,
+        "owner_risk_load": 4,
+        "raci_coverage_pct": 70,
+        "signoff_sla_breach_pct": 15,
+        "audit_finding_closure_pct": 75
+      },
+      "compliance": {
+        "control_mapping_pct": 75,
+        "compliance_test_pass_pct": 70,
+        "regulatory_change_impact": "high"
+      },
+      "incidents": {
+        "incidents_90d": 2,
+        "near_misses_90d": 3,
+        "repeat_incident_rate_pct": 8,
+        "root_cause_closure_pct": 70
+      },
+      "confidence": {
+        "assessment_confidence_pct": 75,
+        "evidence_completeness_pct": 65,
+        "source_count": 3
+      },
+      "dependency": {
+        "criticality": "high",
+        "third_party_spof": false,
+        "correlated_tags": [
+          "privacy",
+          "compliance"
+        ]
+      },
+      "predictive": {
+        "exposure_multiplier": 1.43,
+        "velocity_uplift": 0,
+        "confidence_weight": 0.75,
+        "predictive_score": 38,
+        "predictive_band": "low"
+      }
+    },
+    {
+      "id": "AI-R-003",
+      "symbol": "DQ",
+      "name": "Data Quality",
+      "description": "Inaccurate or incomplete data.",
+      "category": "Data",
+      "likelihood": 4,
+      "impact": 4,
+      "score": 80,
+      "trend": "up",
+      "mitigation_status": "in_progress",
+      "owner": "Data Engineering",
+      "mitigations": [
+        "Data profiling",
+        "Schema validation",
+        "DQ SLAs"
+      ],
+      "references": [
+        "DAMA-DMBOK"
+      ],
+      "tags": [
+        "quality",
+        "reliability"
+      ],
+      "last_reviewed": "2026-09-20",
+      "risk_velocity": {
+        "score_delta_30d": 4,
+        "score_delta_90d": 9,
+        "momentum": "accelerating",
+        "days_since_change": 8
+      },
+      "control_effectiveness": {
+        "implementation_pct": 65,
+        "test_pass_rate_pct": 60,
+        "evidence_coverage_pct": 75,
+        "effectiveness_score": 65,
+        "residual_score": 28
+      },
+      "detection_response": {
+        "mttd_hours": 8,
+        "mttr_hours": 20,
+        "alert_coverage_pct": 85,
+        "rollback_time_hours": 4,
+        "dry_run_success_pct": 92
+      },
+      "exposure": {
+        "affected_systems": 5,
+        "affected_records": 800000,
+        "affected_users": 200000,
+        "data_sensitivity": "medium",
+        "external_facing": false,
+        "privilege_level": "low",
+        "autonomy_tier": 0
+      },
+      "assurance": {
+        "eval_coverage_pct": 75,
+        "red_team_coverage_pct": 45,
+        "framework_mapping_pct": 80,
+        "evidence_freshness_days": 15,
+        "independent_validation": false
+      },
+      "leading_indicators": {
+        "bias_audit_pass_pct": 78,
+        "dq_pass_rate_pct": 74,
+        "drift_psi": 0.18,
+        "lineage_coverage_pct": 65
+      },
+      "agentic_controls": null,
+      "governance_health": {
+        "review_overdue_days": 3,
+        "owner_risk_load": 6,
+        "raci_coverage_pct": 82,
+        "signoff_sla_breach_pct": 6,
+        "audit_finding_closure_pct": 88
+      },
+      "compliance": {
+        "control_mapping_pct": 80,
+        "compliance_test_pass_pct": 78,
+        "regulatory_change_impact": "low"
+      },
+      "incidents": {
+        "incidents_90d": 2,
+        "near_misses_90d": 4,
+        "repeat_incident_rate_pct": 10,
+        "root_cause_closure_pct": 80
+      },
+      "confidence": {
+        "assessment_confidence_pct": 85,
+        "evidence_completeness_pct": 80,
+        "source_count": 4
+      },
+      "dependency": {
+        "criticality": "high",
+        "third_party_spof": false,
+        "correlated_tags": [
+          "quality",
+          "reliability"
+        ]
+      },
+      "predictive": {
+        "exposure_multiplier": 1.15,
+        "velocity_uplift": 0.2,
+        "confidence_weight": 0.85,
+        "predictive_score": 33,
+        "predictive_band": "low"
+      }
+    },
+    {
+      "id": "AI-R-004",
+      "symbol": "DL",
+      "name": "Data Lineage",
+      "description": "Unclear data provenance.",
+      "category": "Data",
+      "likelihood": 2,
+      "impact": 2,
+      "score": 40,
+      "trend": "flat",
+      "mitigation_status": "open",
+      "owner": "Data Engineering",
+      "mitigations": [
+        "Lineage tooling",
+        "Column-level tagging"
+      ],
+      "references": [
+        "ISO 8000-61"
+      ],
+      "tags": [
+        "provenance",
+        "audit"
+      ],
+      "last_reviewed": "2026-07-11",
+      "risk_velocity": {
+        "score_delta_30d": 0,
+        "score_delta_90d": 1,
+        "momentum": "stable",
+        "days_since_change": 30
+      },
+      "control_effectiveness": {
+        "implementation_pct": 30,
+        "test_pass_rate_pct": 35,
+        "evidence_coverage_pct": 50,
+        "effectiveness_score": 36,
+        "residual_score": 26
+      },
+      "detection_response": {
+        "mttd_hours": 24,
+        "mttr_hours": 48,
+        "alert_coverage_pct": 65,
+        "rollback_time_hours": 12,
+        "dry_run_success_pct": 80
+      },
+      "exposure": {
+        "affected_systems": 3,
+        "affected_records": 50000,
+        "affected_users": 10000,
+        "data_sensitivity": "low",
+        "external_facing": false,
+        "privilege_level": "low",
+        "autonomy_tier": 0
+      },
+      "assurance": {
+        "eval_coverage_pct": 55,
+        "red_team_coverage_pct": 25,
+        "framework_mapping_pct": 70,
+        "evidence_freshness_days": 40,
+        "independent_validation": false
+      },
+      "leading_indicators": {
+        "bias_audit_pass_pct": 85,
+        "dq_pass_rate_pct": 86,
+        "drift_psi": 0.05,
+        "lineage_coverage_pct": 42
+      },
+      "agentic_controls": null,
+      "governance_health": {
+        "review_overdue_days": 20,
+        "owner_risk_load": 4,
+        "raci_coverage_pct": 68,
+        "signoff_sla_breach_pct": 18,
+        "audit_finding_closure_pct": 65
+      },
+      "compliance": {
+        "control_mapping_pct": 68,
+        "compliance_test_pass_pct": 72,
+        "regulatory_change_impact": "low"
+      },
+      "incidents": {
+        "incidents_90d": 0,
+        "near_misses_90d": 1,
+        "repeat_incident_rate_pct": 2,
+        "root_cause_closure_pct": 75
+      },
+      "confidence": {
+        "assessment_confidence_pct": 70,
+        "evidence_completeness_pct": 60,
+        "source_count": 2
+      },
+      "dependency": {
+        "criticality": "medium",
+        "third_party_spof": false,
+        "correlated_tags": [
+          "provenance",
+          "audit"
+        ]
+      },
+      "predictive": {
+        "exposure_multiplier": 1,
+        "velocity_uplift": 0,
+        "confidence_weight": 0.7,
+        "predictive_score": 18,
+        "predictive_band": "safe"
+      }
+    },
+    {
+      "id": "AI-R-005",
+      "symbol": "DR",
+      "name": "Data Drift",
+      "description": "Data changes over time.",
+      "category": "Data",
+      "likelihood": 3,
+      "impact": 3,
+      "score": 60,
+      "trend": "up",
+      "mitigation_status": "in_progress",
+      "owner": "ML Platform",
+      "mitigations": [
+        "Drift monitors",
+        "Automated retraining"
+      ],
+      "references": [
+        "NIST AI RMF MEASURE 2.5"
+      ],
+      "tags": [
+        "monitoring",
+        "mlops"
+      ],
+      "last_reviewed": "2026-10-02",
+      "risk_velocity": {
+        "score_delta_30d": 3,
+        "score_delta_90d": 7,
+        "momentum": "accelerating",
+        "days_since_change": 5
+      },
+      "control_effectiveness": {
+        "implementation_pct": 55,
+        "test_pass_rate_pct": 50,
+        "evidence_coverage_pct": 65,
+        "effectiveness_score": 55,
+        "residual_score": 27
+      },
+      "detection_response": {
+        "mttd_hours": 6,
+        "mttr_hours": 16,
+        "alert_coverage_pct": 88,
+        "rollback_time_hours": 3,
+        "dry_run_success_pct": 94
+      },
+      "exposure": {
+        "affected_systems": 4,
+        "affected_records": 300000,
+        "affected_users": 60000,
+        "data_sensitivity": "medium",
+        "external_facing": false,
+        "privilege_level": "low",
+        "autonomy_tier": 0
+      },
+      "assurance": {
+        "eval_coverage_pct": 72,
+        "red_team_coverage_pct": 38,
+        "framework_mapping_pct": 82,
+        "evidence_freshness_days": 18,
+        "independent_validation": false
+      },
+      "leading_indicators": {
+        "bias_audit_pass_pct": 80,
+        "dq_pass_rate_pct": 79,
+        "drift_psi": 0.22,
+        "lineage_coverage_pct": 72
+      },
+      "agentic_controls": null,
+      "governance_health": {
+        "review_overdue_days": 1,
+        "owner_risk_load": 5,
+        "raci_coverage_pct": 84,
+        "signoff_sla_breach_pct": 5,
+        "audit_finding_closure_pct": 90
+      },
+      "compliance": {
+        "control_mapping_pct": 82,
+        "compliance_test_pass_pct": 81,
+        "regulatory_change_impact": "low"
+      },
+      "incidents": {
+        "incidents_90d": 1,
+        "near_misses_90d": 3,
+        "repeat_incident_rate_pct": 6,
+        "root_cause_closure_pct": 86
+      },
+      "confidence": {
+        "assessment_confidence_pct": 78,
+        "evidence_completeness_pct": 76,
+        "source_count": 3
+      },
+      "dependency": {
+        "criticality": "medium",
+        "third_party_spof": false,
+        "correlated_tags": [
+          "monitoring",
+          "mlops"
+        ]
+      },
+      "predictive": {
+        "exposure_multiplier": 1.15,
+        "velocity_uplift": 0.2,
+        "confidence_weight": 0.78,
+        "predictive_score": 29,
+        "predictive_band": "low"
+      }
+    },
+    {
+      "id": "AI-R-006",
+      "symbol": "LE",
+      "name": "Data Leakage",
+      "description": "Sensitive data leaks out.",
+      "category": "Model",
+      "likelihood": 4,
+      "impact": 5,
+      "score": 92,
+      "trend": "up",
+      "mitigation_status": "open",
+      "owner": "Security",
+      "mitigations": [
+        "Egress controls",
+        "DLP",
+        "Model output filters"
+      ],
+      "references": [
+        "OWASP LLM06",
+        "CIS Controls 3"
+      ],
+      "tags": [
+        "exploit",
+        "security-critical"
+      ],
+      "last_reviewed": "2026-10-10",
+      "risk_velocity": {
+        "score_delta_30d": 6,
+        "score_delta_90d": 13,
+        "momentum": "accelerating",
+        "days_since_change": 3
+      },
+      "control_effectiveness": {
+        "implementation_pct": 35,
+        "test_pass_rate_pct": 30,
+        "evidence_coverage_pct": 50,
+        "effectiveness_score": 36,
+        "residual_score": 59
+      },
+      "detection_response": {
+        "mttd_hours": 4,
+        "mttr_hours": 12,
+        "alert_coverage_pct": 82,
+        "rollback_time_hours": 8,
+        "dry_run_success_pct": 78
+      },
+      "exposure": {
+        "affected_systems": 8,
+        "affected_records": 2000000,
+        "affected_users": 500000,
+        "data_sensitivity": "critical",
+        "external_facing": true,
+        "privilege_level": "high",
+        "autonomy_tier": 0
+      },
+      "assurance": {
+        "eval_coverage_pct": 65,
+        "red_team_coverage_pct": 55,
+        "framework_mapping_pct": 78,
+        "evidence_freshness_days": 12,
+        "independent_validation": false
+      },
+      "leading_indicators": {
+        "hallucination_rate_pct": 4.2,
+        "eval_regression_pass_pct": 76,
+        "drift_psi": 0.16,
+        "prompt_variance": 0.24
+      },
+      "agentic_controls": null,
+      "governance_health": {
+        "review_overdue_days": 0,
+        "owner_risk_load": 7,
+        "raci_coverage_pct": 72,
+        "signoff_sla_breach_pct": 10,
+        "audit_finding_closure_pct": 70
+      },
+      "compliance": {
+        "control_mapping_pct": 72,
+        "compliance_test_pass_pct": 68,
+        "regulatory_change_impact": "high"
+      },
+      "incidents": {
+        "incidents_90d": 3,
+        "near_misses_90d": 5,
+        "repeat_incident_rate_pct": 14,
+        "root_cause_closure_pct": 62
+      },
+      "confidence": {
+        "assessment_confidence_pct": 88,
+        "evidence_completeness_pct": 82,
+        "source_count": 5
+      },
+      "dependency": {
+        "criticality": "critical",
+        "third_party_spof": true,
+        "correlated_tags": [
+          "exploit",
+          "security-critical"
+        ]
+      },
+      "predictive": {
+        "exposure_multiplier": 1.66,
+        "velocity_uplift": 0.2,
+        "confidence_weight": 0.88,
+        "predictive_score": 100,
+        "predictive_band": "critical"
+      }
+    },
+    {
+      "id": "AI-R-007",
+      "symbol": "CR",
+      "name": "Consent Risk",
+      "description": "Missing or invalid consent.",
+      "category": "Model",
+      "likelihood": 2,
+      "impact": 3,
+      "score": 52,
+      "trend": "flat",
+      "mitigation_status": "in_progress",
+      "owner": "Legal",
+      "mitigations": [
+        "Consent ledger",
+        "Opt-out flows"
+      ],
+      "references": [
+        "GDPR Art. 7"
+      ],
+      "tags": [
+        "legal",
+        "compliance"
+      ],
+      "last_reviewed": "2026-08-15",
+      "risk_velocity": {
+        "score_delta_30d": 1,
+        "score_delta_90d": 2,
+        "momentum": "stable",
+        "days_since_change": 22
+      },
+      "control_effectiveness": {
+        "implementation_pct": 50,
+        "test_pass_rate_pct": 55,
+        "evidence_coverage_pct": 70,
+        "effectiveness_score": 56,
+        "residual_score": 23
+      },
+      "detection_response": {
+        "mttd_hours": 20,
+        "mttr_hours": 40,
+        "alert_coverage_pct": 72,
+        "rollback_time_hours": 14,
+        "dry_run_success_pct": 82
+      },
+      "exposure": {
+        "affected_systems": 2,
+        "affected_records": 150000,
+        "affected_users": 30000,
+        "data_sensitivity": "high",
+        "external_facing": false,
+        "privilege_level": "medium",
+        "autonomy_tier": 0
+      },
+      "assurance": {
+        "eval_coverage_pct": 62,
+        "red_team_coverage_pct": 30,
+        "framework_mapping_pct": 76,
+        "evidence_freshness_days": 32,
+        "independent_validation": false
+      },
+      "leading_indicators": {
+        "hallucination_rate_pct": 2.8,
+        "eval_regression_pass_pct": 84,
+        "drift_psi": 0.06,
+        "prompt_variance": 0.11
+      },
+      "agentic_controls": null,
+      "governance_health": {
+        "review_overdue_days": 8,
+        "owner_risk_load": 4,
+        "raci_coverage_pct": 74,
+        "signoff_sla_breach_pct": 12,
+        "audit_finding_closure_pct": 78
+      },
+      "compliance": {
+        "control_mapping_pct": 76,
+        "compliance_test_pass_pct": 74,
+        "regulatory_change_impact": "medium"
+      },
+      "incidents": {
+        "incidents_90d": 0,
+        "near_misses_90d": 2,
+        "repeat_incident_rate_pct": 3,
+        "root_cause_closure_pct": 80
+      },
+      "confidence": {
+        "assessment_confidence_pct": 72,
+        "evidence_completeness_pct": 68,
+        "source_count": 3
+      },
+      "dependency": {
+        "criticality": "medium",
+        "third_party_spof": false,
+        "correlated_tags": [
+          "legal",
+          "compliance"
+        ]
+      },
+      "predictive": {
+        "exposure_multiplier": 1.33,
+        "velocity_uplift": 0,
+        "confidence_weight": 0.72,
+        "predictive_score": 22,
+        "predictive_band": "safe"
+      }
+    },
+    {
+      "id": "AI-R-008",
+      "symbol": "SD",
+      "name": "Synthetic Data",
+      "description": "Fake data causes false confidence.",
+      "category": "Model",
+      "likelihood": 2,
+      "impact": 2,
+      "score": 40,
+      "trend": "down",
+      "mitigation_status": "mitigated",
+      "owner": "ML Platform",
+      "mitigations": [
+        "Synthetic data validation",
+        "Provenance tags"
+      ],
+      "references": [
+        "NIST AI 100-1"
+      ],
+      "tags": [
+        "validation"
+      ],
+      "last_reviewed": "2026-06-05",
+      "risk_velocity": {
+        "score_delta_30d": -3,
+        "score_delta_90d": -8,
+        "momentum": "decelerating",
+        "days_since_change": 25
+      },
+      "control_effectiveness": {
+        "implementation_pct": 80,
+        "test_pass_rate_pct": 75,
+        "evidence_coverage_pct": 85,
+        "effectiveness_score": 79,
+        "residual_score": 8
+      },
+      "detection_response": {
+        "mttd_hours": 16,
+        "mttr_hours": 32,
+        "alert_coverage_pct": 78,
+        "rollback_time_hours": 6,
+        "dry_run_success_pct": 88
+      },
+      "exposure": {
+        "affected_systems": 2,
+        "affected_records": 10000,
+        "affected_users": 5000,
+        "data_sensitivity": "low",
+        "external_facing": false,
+        "privilege_level": "low",
+        "autonomy_tier": 0
+      },
+      "assurance": {
+        "eval_coverage_pct": 85,
+        "red_team_coverage_pct": 60,
+        "framework_mapping_pct": 88,
+        "evidence_freshness_days": 10,
+        "independent_validation": true
+      },
+      "leading_indicators": {
+        "hallucination_rate_pct": 1.1,
+        "eval_regression_pass_pct": 92,
+        "drift_psi": 0.03,
+        "prompt_variance": 0.05
+      },
+      "agentic_controls": null,
+      "governance_health": {
+        "review_overdue_days": 0,
+        "owner_risk_load": 3,
+        "raci_coverage_pct": 88,
+        "signoff_sla_breach_pct": 2,
+        "audit_finding_closure_pct": 94
+      },
+      "compliance": {
+        "control_mapping_pct": 88,
+        "compliance_test_pass_pct": 90,
+        "regulatory_change_impact": "low"
+      },
+      "incidents": {
+        "incidents_90d": 0,
+        "near_misses_90d": 0,
+        "repeat_incident_rate_pct": 0,
+        "root_cause_closure_pct": 95
+      },
+      "confidence": {
+        "assessment_confidence_pct": 85,
+        "evidence_completeness_pct": 88,
+        "source_count": 4
+      },
+      "dependency": {
+        "criticality": "low",
+        "third_party_spof": false,
+        "correlated_tags": [
+          "validation"
+        ]
+      },
+      "predictive": {
+        "exposure_multiplier": 1,
+        "velocity_uplift": -0.1,
+        "confidence_weight": 0.85,
+        "predictive_score": 6,
+        "predictive_band": "safe"
+      }
+    },
+    {
+      "id": "AI-R-009",
+      "symbol": "ES",
+      "name": "Embedded Secrets",
+      "description": "Secrets hidden in data.",
+      "category": "Security",
+      "likelihood": 3,
+      "impact": 4,
+      "score": 72,
+      "trend": "flat",
+      "mitigation_status": "in_progress",
+      "owner": "AppSec",
+      "mitigations": [
+        "Secret scanners",
+        "Vault integration"
+      ],
+      "references": [
+        "CIS Secrets Mgmt"
+      ],
+      "tags": [
+        "credentials"
+      ],
+      "last_reviewed": "2026-09-01",
+      "risk_velocity": {
+        "score_delta_30d": 1,
+        "score_delta_90d": 3,
+        "momentum": "stable",
+        "days_since_change": 14
+      },
+      "control_effectiveness": {
+        "implementation_pct": 55,
+        "test_pass_rate_pct": 50,
+        "evidence_coverage_pct": 65,
+        "effectiveness_score": 55,
+        "residual_score": 32
+      },
+      "detection_response": {
+        "mttd_hours": 5,
+        "mttr_hours": 14,
+        "alert_coverage_pct": 84,
+        "rollback_time_hours": 4,
+        "dry_run_success_pct": 90
+      },
+      "exposure": {
+        "affected_systems": 6,
+        "affected_records": 500000,
+        "affected_users": 100000,
+        "data_sensitivity": "high",
+        "external_facing": true,
+        "privilege_level": "high",
+        "autonomy_tier": 0
+      },
+      "assurance": {
+        "eval_coverage_pct": 68,
+        "red_team_coverage_pct": 52,
+        "framework_mapping_pct": 80,
+        "evidence_freshness_days": 16,
+        "independent_validation": false
+      },
+      "leading_indicators": {
+        "injection_success_pct": 2.1,
+        "secret_findings": 7,
+        "token_ttl_hours": 12,
+        "egress_block_coverage_pct": 82,
+        "vuln_age_days": 35,
+        "epss": 0.21
+      },
+      "agentic_controls": null,
+      "governance_health": {
+        "review_overdue_days": 2,
+        "owner_risk_load": 6,
+        "raci_coverage_pct": 78,
+        "signoff_sla_breach_pct": 7,
+        "audit_finding_closure_pct": 84
+      },
+      "compliance": {
+        "control_mapping_pct": 80,
+        "compliance_test_pass_pct": 79,
+        "regulatory_change_impact": "medium"
+      },
+      "incidents": {
+        "incidents_90d": 1,
+        "near_misses_90d": 3,
+        "repeat_incident_rate_pct": 7,
+        "root_cause_closure_pct": 82
+      },
+      "confidence": {
+        "assessment_confidence_pct": 82,
+        "evidence_completeness_pct": 78,
+        "source_count": 4
+      },
+      "dependency": {
+        "criticality": "high",
+        "third_party_spof": false,
+        "correlated_tags": [
+          "credentials"
+        ]
+      },
+      "predictive": {
+        "exposure_multiplier": 1.51,
+        "velocity_uplift": 0,
+        "confidence_weight": 0.82,
+        "predictive_score": 40,
+        "predictive_band": "low"
+      }
+    },
+    {
+      "id": "AI-R-010",
+      "symbol": "PI",
+      "name": "PII Exposure",
+      "description": "Personal data is exposed.",
+      "category": "Governance",
+      "likelihood": 4,
+      "impact": 5,
+      "score": 92,
+      "trend": "up",
+      "mitigation_status": "open",
+      "owner": "Privacy Office",
+      "mitigations": [
+        "PII classifiers",
+        "Redaction",
+        "Audit logs"
+      ],
+      "references": [
+        "GDPR Art. 32",
+        "NIST SP 800-122"
+      ],
+      "tags": [
+        "privacy",
+        "regulatory"
+      ],
+      "last_reviewed": "2026-10-12",
+      "risk_velocity": {
+        "score_delta_30d": 6,
+        "score_delta_90d": 12,
+        "momentum": "accelerating",
+        "days_since_change": 2
+      },
+      "control_effectiveness": {
+        "implementation_pct": 30,
+        "test_pass_rate_pct": 35,
+        "evidence_coverage_pct": 55,
+        "effectiveness_score": 37,
+        "residual_score": 58
+      },
+      "detection_response": {
+        "mttd_hours": 3,
+        "mttr_hours": 10,
+        "alert_coverage_pct": 86,
+        "rollback_time_hours": 7,
+        "dry_run_success_pct": 80
+      },
+      "exposure": {
+        "affected_systems": 7,
+        "affected_records": 3000000,
+        "affected_users": 800000,
+        "data_sensitivity": "critical",
+        "external_facing": true,
+        "privilege_level": "high",
+        "autonomy_tier": 0
+      },
+      "assurance": {
+        "eval_coverage_pct": 64,
+        "red_team_coverage_pct": 48,
+        "framework_mapping_pct": 74,
+        "evidence_freshness_days": 14,
+        "independent_validation": false
+      },
+      "leading_indicators": {
+        "review_overdue_days": 4,
+        "raci_coverage_pct": 70,
+        "signoff_sla_breach_pct": 16,
+        "audit_finding_closure_pct": 66,
+        "control_mapping_pct": 74
+      },
+      "agentic_controls": null,
+      "governance_health": {
+        "review_overdue_days": 4,
+        "owner_risk_load": 8,
+        "raci_coverage_pct": 70,
+        "signoff_sla_breach_pct": 16,
+        "audit_finding_closure_pct": 66
+      },
+      "compliance": {
+        "control_mapping_pct": 74,
+        "compliance_test_pass_pct": 66,
+        "regulatory_change_impact": "high"
+      },
+      "incidents": {
+        "incidents_90d": 4,
+        "near_misses_90d": 6,
+        "repeat_incident_rate_pct": 18,
+        "root_cause_closure_pct": 58
+      },
+      "confidence": {
+        "assessment_confidence_pct": 90,
+        "evidence_completeness_pct": 84,
+        "source_count": 5
+      },
+      "dependency": {
+        "criticality": "critical",
+        "third_party_spof": true,
+        "correlated_tags": [
+          "privacy",
+          "regulatory"
+        ]
+      },
+      "predictive": {
+        "exposure_multiplier": 1.66,
+        "velocity_uplift": 0.2,
+        "confidence_weight": 0.9,
+        "predictive_score": 100,
+        "predictive_band": "critical"
+      }
+    },
+    {
+      "id": "AI-R-011",
+      "symbol": "HL",
+      "name": "Hallucination",
+      "description": "Outputs are fabricated.",
+      "category": "Model",
+      "likelihood": 5,
+      "impact": 3,
+      "score": 76,
+      "trend": "up",
+      "mitigation_status": "in_progress",
+      "owner": "ML Research",
+      "mitigations": [
+        "RAG grounding",
+        "Citation enforcement"
+      ],
+      "references": [
+        "NIST AI 600-1"
+      ],
+      "tags": [
+        "quality",
+        "trust"
+      ],
+      "last_reviewed": "2026-10-08",
+      "risk_velocity": {
+        "score_delta_30d": 5,
+        "score_delta_90d": 10,
+        "momentum": "accelerating",
+        "days_since_change": 4
+      },
+      "control_effectiveness": {
+        "implementation_pct": 50,
+        "test_pass_rate_pct": 45,
+        "evidence_coverage_pct": 60,
+        "effectiveness_score": 50,
+        "residual_score": 38
+      },
+      "detection_response": {
+        "mttd_hours": 7,
+        "mttr_hours": 18,
+        "alert_coverage_pct": 80,
+        "rollback_time_hours": 5,
+        "dry_run_success_pct": 88
+      },
+      "exposure": {
+        "affected_systems": 4,
+        "affected_records": 100000,
+        "affected_users": 200000,
+        "data_sensitivity": "medium",
+        "external_facing": true,
+        "privilege_level": "low",
+        "autonomy_tier": 1
+      },
+      "assurance": {
+        "eval_coverage_pct": 70,
+        "red_team_coverage_pct": 42,
+        "framework_mapping_pct": 78,
+        "evidence_freshness_days": 20,
+        "independent_validation": false
+      },
+      "leading_indicators": {
+        "hallucination_rate_pct": 6.4,
+        "eval_regression_pass_pct": 68,
+        "drift_psi": 0.19,
+        "prompt_variance": 0.31
+      },
+      "agentic_controls": null,
+      "governance_health": {
+        "review_overdue_days": 1,
+        "owner_risk_load": 6,
+        "raci_coverage_pct": 76,
+        "signoff_sla_breach_pct": 9,
+        "audit_finding_closure_pct": 82
+      },
+      "compliance": {
+        "control_mapping_pct": 78,
+        "compliance_test_pass_pct": 72,
+        "regulatory_change_impact": "medium"
+      },
+      "incidents": {
+        "incidents_90d": 2,
+        "near_misses_90d": 4,
+        "repeat_incident_rate_pct": 11,
+        "root_cause_closure_pct": 74
+      },
+      "confidence": {
+        "assessment_confidence_pct": 80,
+        "evidence_completeness_pct": 76,
+        "source_count": 4
+      },
+      "dependency": {
+        "criticality": "high",
+        "third_party_spof": false,
+        "correlated_tags": [
+          "quality",
+          "trust"
+        ]
+      },
+      "predictive": {
+        "exposure_multiplier": 1.25,
+        "velocity_uplift": 0.2,
+        "confidence_weight": 0.8,
+        "predictive_score": 46,
+        "predictive_band": "low"
+      }
+    },
+    {
+      "id": "AI-R-012",
+      "symbol": "EX",
+      "name": "Explainability",
+      "description": "Decisions lack transparency.",
+      "category": "Model",
+      "likelihood": 3,
+      "impact": 3,
+      "score": 60,
+      "trend": "flat",
+      "mitigation_status": "in_progress",
+      "owner": "ML Research",
+      "mitigations": [
+        "SHAP/LIME",
+        "Decision logs"
+      ],
+      "references": [
+        "EU AI Act Art. 13"
+      ],
+      "tags": [
+        "transparency",
+        "compliance"
+      ],
+      "last_reviewed": "2026-09-22",
+      "risk_velocity": {
+        "score_delta_30d": 1,
+        "score_delta_90d": 2,
+        "momentum": "stable",
+        "days_since_change": 16
+      },
+      "control_effectiveness": {
+        "implementation_pct": 45,
+        "test_pass_rate_pct": 40,
+        "evidence_coverage_pct": 55,
+        "effectiveness_score": 45,
+        "residual_score": 33
+      },
+      "detection_response": {
+        "mttd_hours": 14,
+        "mttr_hours": 28,
+        "alert_coverage_pct": 74,
+        "rollback_time_hours": 9,
+        "dry_run_success_pct": 84
+      },
+      "exposure": {
+        "affected_systems": 3,
+        "affected_records": 200000,
+        "affected_users": 40000,
+        "data_sensitivity": "medium",
+        "external_facing": false,
+        "privilege_level": "low",
+        "autonomy_tier": 0
+      },
+      "assurance": {
+        "eval_coverage_pct": 60,
+        "red_team_coverage_pct": 32,
+        "framework_mapping_pct": 72,
+        "evidence_freshness_days": 26,
+        "independent_validation": false
+      },
+      "leading_indicators": {
+        "hallucination_rate_pct": 3.2,
+        "eval_regression_pass_pct": 80,
+        "drift_psi": 0.09,
+        "prompt_variance": 0.14
+      },
+      "agentic_controls": null,
+      "governance_health": {
+        "review_overdue_days": 5,
+        "owner_risk_load": 4,
+        "raci_coverage_pct": 72,
+        "signoff_sla_breach_pct": 11,
+        "audit_finding_closure_pct": 76
+      },
+      "compliance": {
+        "control_mapping_pct": 72,
+        "compliance_test_pass_pct": 73,
+        "regulatory_change_impact": "high"
+      },
+      "incidents": {
+        "incidents_90d": 0,
+        "near_misses_90d": 2,
+        "repeat_incident_rate_pct": 4,
+        "root_cause_closure_pct": 78
+      },
+      "confidence": {
+        "assessment_confidence_pct": 75,
+        "evidence_completeness_pct": 70,
+        "source_count": 3
+      },
+      "dependency": {
+        "criticality": "medium",
+        "third_party_spof": false,
+        "correlated_tags": [
+          "transparency",
+          "compliance"
+        ]
+      },
+      "predictive": {
+        "exposure_multiplier": 1.15,
+        "velocity_uplift": 0,
+        "confidence_weight": 0.75,
+        "predictive_score": 28,
+        "predictive_band": "low"
+      }
+    },
+    {
+      "id": "AI-R-013",
+      "symbol": "OF",
+      "name": "Overfitting",
+      "description": "Performs well on training only.",
+      "category": "Model",
+      "likelihood": 2,
+      "impact": 2,
+      "score": 40,
+      "trend": "flat",
+      "mitigation_status": "mitigated",
+      "owner": "ML Research",
+      "mitigations": [
+        "Cross-validation",
+        "Holdout sets"
+      ],
+      "references": [
+        "NIST AI RMF MEASURE 2.3"
+      ],
+      "tags": [
+        "quality"
+      ],
+      "last_reviewed": "2026-05-18",
+      "risk_velocity": {
+        "score_delta_30d": 0,
+        "score_delta_90d": 1,
+        "momentum": "stable",
+        "days_since_change": 35
+      },
+      "control_effectiveness": {
+        "implementation_pct": 85,
+        "test_pass_rate_pct": 80,
+        "evidence_coverage_pct": 90,
+        "effectiveness_score": 84,
+        "residual_score": 6
+      },
+      "detection_response": {
+        "mttd_hours": 18,
+        "mttr_hours": 36,
+        "alert_coverage_pct": 80,
+        "rollback_time_hours": 6,
+        "dry_run_success_pct": 92
+      },
+      "exposure": {
+        "affected_systems": 2,
+        "affected_records": 5000,
+        "affected_users": 2000,
+        "data_sensitivity": "low",
+        "external_facing": false,
+        "privilege_level": "low",
+        "autonomy_tier": 0
+      },
+      "assurance": {
+        "eval_coverage_pct": 88,
+        "red_team_coverage_pct": 62,
+        "framework_mapping_pct": 90,
+        "evidence_freshness_days": 8,
+        "independent_validation": true
+      },
+      "leading_indicators": {
+        "hallucination_rate_pct": 1,
+        "eval_regression_pass_pct": 94,
+        "drift_psi": 0.02,
+        "prompt_variance": 0.04
+      },
+      "agentic_controls": null,
+      "governance_health": {
+        "review_overdue_days": 0,
+        "owner_risk_load": 3,
+        "raci_coverage_pct": 90,
+        "signoff_sla_breach_pct": 1,
+        "audit_finding_closure_pct": 95
+      },
+      "compliance": {
+        "control_mapping_pct": 90,
+        "compliance_test_pass_pct": 92,
+        "regulatory_change_impact": "low"
+      },
+      "incidents": {
+        "incidents_90d": 0,
+        "near_misses_90d": 0,
+        "repeat_incident_rate_pct": 0,
+        "root_cause_closure_pct": 96
+      },
+      "confidence": {
+        "assessment_confidence_pct": 88,
+        "evidence_completeness_pct": 90,
+        "source_count": 4
+      },
+      "dependency": {
+        "criticality": "low",
+        "third_party_spof": false,
+        "correlated_tags": [
+          "quality"
+        ]
+      },
+      "predictive": {
+        "exposure_multiplier": 1,
+        "velocity_uplift": 0,
+        "confidence_weight": 0.88,
+        "predictive_score": 5,
+        "predictive_band": "safe"
+      }
+    },
+    {
+      "id": "AI-R-014",
+      "symbol": "UF",
+      "name": "Underfitting",
+      "description": "Fails to learn patterns.",
+      "category": "Model",
+      "likelihood": 1,
+      "impact": 1,
+      "score": 20,
+      "trend": "down",
+      "mitigation_status": "mitigated",
+      "owner": "ML Research",
+      "mitigations": [
+        "Model capacity review",
+        "Feature engineering"
+      ],
+      "references": [
+        "NIST AI RMF MEASURE 2.3"
+      ],
+      "tags": [
+        "quality"
+      ],
+      "last_reviewed": "2026-04-10",
+      "risk_velocity": {
+        "score_delta_30d": -2,
+        "score_delta_90d": -6,
+        "momentum": "decelerating",
+        "days_since_change": 28
+      },
+      "control_effectiveness": {
+        "implementation_pct": 85,
+        "test_pass_rate_pct": 80,
+        "evidence_coverage_pct": 90,
+        "effectiveness_score": 84,
+        "residual_score": 3
+      },
+      "detection_response": {
+        "mttd_hours": 22,
+        "mttr_hours": 44,
+        "alert_coverage_pct": 76,
+        "rollback_time_hours": 8,
+        "dry_run_success_pct": 86
+      },
+      "exposure": {
+        "affected_systems": 1,
+        "affected_records": 5000,
+        "affected_users": 1000,
+        "data_sensitivity": "low",
+        "external_facing": false,
+        "privilege_level": "low",
+        "autonomy_tier": 0
+      },
+      "assurance": {
+        "eval_coverage_pct": 86,
+        "red_team_coverage_pct": 60,
+        "framework_mapping_pct": 88,
+        "evidence_freshness_days": 12,
+        "independent_validation": true
+      },
+      "leading_indicators": {
+        "hallucination_rate_pct": 0.8,
+        "eval_regression_pass_pct": 95,
+        "drift_psi": 0.01,
+        "prompt_variance": 0.03
+      },
+      "agentic_controls": null,
+      "governance_health": {
+        "review_overdue_days": 0,
+        "owner_risk_load": 2,
+        "raci_coverage_pct": 92,
+        "signoff_sla_breach_pct": 1,
+        "audit_finding_closure_pct": 96
+      },
+      "compliance": {
+        "control_mapping_pct": 88,
+        "compliance_test_pass_pct": 93,
+        "regulatory_change_impact": "low"
+      },
+      "incidents": {
+        "incidents_90d": 0,
+        "near_misses_90d": 0,
+        "repeat_incident_rate_pct": 0,
+        "root_cause_closure_pct": 97
+      },
+      "confidence": {
+        "assessment_confidence_pct": 90,
+        "evidence_completeness_pct": 92,
+        "source_count": 4
+      },
+      "dependency": {
+        "criticality": "low",
+        "third_party_spof": false,
+        "correlated_tags": [
+          "quality"
+        ]
+      },
+      "predictive": {
+        "exposure_multiplier": 1,
+        "velocity_uplift": -0.1,
+        "confidence_weight": 0.9,
+        "predictive_score": 2,
+        "predictive_band": "safe"
+      }
+    },
+    {
+      "id": "AI-R-015",
+      "symbol": "RB",
+      "name": "Robustness",
+      "description": "Breaks under change.",
+      "category": "Model",
+      "likelihood": 3,
+      "impact": 3,
+      "score": 60,
+      "trend": "up",
+      "mitigation_status": "in_progress",
+      "owner": "ML Research",
+      "mitigations": [
+        "Adversarial testing",
+        "Chaos engineering"
+      ],
+      "references": [
+        "NIST AI 100-2"
+      ],
+      "tags": [
+        "reliability"
+      ],
+      "last_reviewed": "2026-09-15",
+      "risk_velocity": {
+        "score_delta_30d": 3,
+        "score_delta_90d": 6,
+        "momentum": "accelerating",
+        "days_since_change": 9
+      },
+      "control_effectiveness": {
+        "implementation_pct": 50,
+        "test_pass_rate_pct": 45,
+        "evidence_coverage_pct": 60,
+        "effectiveness_score": 50,
+        "residual_score": 30
+      },
+      "detection_response": {
+        "mttd_hours": 9,
+        "mttr_hours": 22,
+        "alert_coverage_pct": 78,
+        "rollback_time_hours": 7,
+        "dry_run_success_pct": 86
+      },
+      "exposure": {
+        "affected_systems": 5,
+        "affected_records": 300000,
+        "affected_users": 80000,
+        "data_sensitivity": "medium",
+        "external_facing": true,
+        "privilege_level": "medium",
+        "autonomy_tier": 1
+      },
+      "assurance": {
+        "eval_coverage_pct": 66,
+        "red_team_coverage_pct": 50,
+        "framework_mapping_pct": 76,
+        "evidence_freshness_days": 22,
+        "independent_validation": false
+      },
+      "leading_indicators": {
+        "hallucination_rate_pct": 4.8,
+        "eval_regression_pass_pct": 74,
+        "drift_psi": 0.21,
+        "prompt_variance": 0.27
+      },
+      "agentic_controls": null,
+      "governance_health": {
+        "review_overdue_days": 2,
+        "owner_risk_load": 5,
+        "raci_coverage_pct": 74,
+        "signoff_sla_breach_pct": 8,
+        "audit_finding_closure_pct": 80
+      },
+      "compliance": {
+        "control_mapping_pct": 76,
+        "compliance_test_pass_pct": 75,
+        "regulatory_change_impact": "medium"
+      },
+      "incidents": {
+        "incidents_90d": 1,
+        "near_misses_90d": 3,
+        "repeat_incident_rate_pct": 8,
+        "root_cause_closure_pct": 78
+      },
+      "confidence": {
+        "assessment_confidence_pct": 78,
+        "evidence_completeness_pct": 74,
+        "source_count": 3
+      },
+      "dependency": {
+        "criticality": "medium",
+        "third_party_spof": false,
+        "correlated_tags": [
+          "reliability"
+        ]
+      },
+      "predictive": {
+        "exposure_multiplier": 1.33,
+        "velocity_uplift": 0.2,
+        "confidence_weight": 0.78,
+        "predictive_score": 37,
+        "predictive_band": "low"
+      }
+    },
+    {
+      "id": "AI-R-016",
+      "symbol": "EV",
+      "name": "Evaluation Failure",
+      "description": "Poor evaluation methods.",
+      "category": "Model",
+      "likelihood": 4,
+      "impact": 3,
+      "score": 68,
+      "trend": "flat",
+      "mitigation_status": "in_progress",
+      "owner": "ML Platform",
+      "mitigations": [
+        "Golden datasets",
+        "Eval CI/CD"
+      ],
+      "references": [
+        "NIST AI RMF MEASURE 1.1"
+      ],
+      "tags": [
+        "quality"
+      ],
+      "last_reviewed": "2026-08-20",
+      "risk_velocity": {
+        "score_delta_30d": 1,
+        "score_delta_90d": 2,
+        "momentum": "stable",
+        "days_since_change": 20
+      },
+      "control_effectiveness": {
+        "implementation_pct": 55,
+        "test_pass_rate_pct": 50,
+        "evidence_coverage_pct": 65,
+        "effectiveness_score": 55,
+        "residual_score": 31
+      },
+      "detection_response": {
+        "mttd_hours": 11,
+        "mttr_hours": 26,
+        "alert_coverage_pct": 76,
+        "rollback_time_hours": 6,
+        "dry_run_success_pct": 88
+      },
+      "exposure": {
+        "affected_systems": 4,
+        "affected_records": 200000,
+        "affected_users": 50000,
+        "data_sensitivity": "medium",
+        "external_facing": false,
+        "privilege_level": "low",
+        "autonomy_tier": 0
+      },
+      "assurance": {
+        "eval_coverage_pct": 64,
+        "red_team_coverage_pct": 40,
+        "framework_mapping_pct": 74,
+        "evidence_freshness_days": 24,
+        "independent_validation": false
+      },
+      "leading_indicators": {
+        "hallucination_rate_pct": 5.1,
+        "eval_regression_pass_pct": 70,
+        "drift_psi": 0.14,
+        "prompt_variance": 0.22
+      },
+      "agentic_controls": null,
+      "governance_health": {
+        "review_overdue_days": 4,
+        "owner_risk_load": 6,
+        "raci_coverage_pct": 72,
+        "signoff_sla_breach_pct": 10,
+        "audit_finding_closure_pct": 74
+      },
+      "compliance": {
+        "control_mapping_pct": 74,
+        "compliance_test_pass_pct": 71,
+        "regulatory_change_impact": "medium"
+      },
+      "incidents": {
+        "incidents_90d": 1,
+        "near_misses_90d": 2,
+        "repeat_incident_rate_pct": 6,
+        "root_cause_closure_pct": 76
+      },
+      "confidence": {
+        "assessment_confidence_pct": 80,
+        "evidence_completeness_pct": 72,
+        "source_count": 3
+      },
+      "dependency": {
+        "criticality": "medium",
+        "third_party_spof": false,
+        "correlated_tags": [
+          "quality"
+        ]
+      },
+      "predictive": {
+        "exposure_multiplier": 1.15,
+        "velocity_uplift": 0,
+        "confidence_weight": 0.8,
+        "predictive_score": 29,
+        "predictive_band": "low"
+      }
+    },
+    {
+      "id": "AI-R-017",
+      "symbol": "VG",
+      "name": "Validation Gap",
+      "description": "Missing or weak validation.",
+      "category": "Model",
+      "likelihood": 3,
+      "impact": 4,
+      "score": 72,
+      "trend": "up",
+      "mitigation_status": "open",
+      "owner": "ML Platform",
+      "mitigations": [
+        "Independent validation",
+        "Red-team reviews"
+      ],
+      "references": [
+        "NIST AI RMF MEASURE 1.3"
+      ],
+      "tags": [
+        "assurance"
+      ],
+      "last_reviewed": "2026-09-05",
+      "risk_velocity": {
+        "score_delta_30d": 4,
+        "score_delta_90d": 9,
+        "momentum": "accelerating",
+        "days_since_change": 7
+      },
+      "control_effectiveness": {
+        "implementation_pct": 35,
+        "test_pass_rate_pct": 30,
+        "evidence_coverage_pct": 50,
+        "effectiveness_score": 36,
+        "residual_score": 46
+      },
+      "detection_response": {
+        "mttd_hours": 10,
+        "mttr_hours": 24,
+        "alert_coverage_pct": 72,
+        "rollback_time_hours": 8,
+        "dry_run_success_pct": 82
+      },
+      "exposure": {
+        "affected_systems": 5,
+        "affected_records": 400000,
+        "affected_users": 100000,
+        "data_sensitivity": "high",
+        "external_facing": true,
+        "privilege_level": "medium",
+        "autonomy_tier": 1
+      },
+      "assurance": {
+        "eval_coverage_pct": 58,
+        "red_team_coverage_pct": 42,
+        "framework_mapping_pct": 70,
+        "evidence_freshness_days": 30,
+        "independent_validation": false
+      },
+      "leading_indicators": {
+        "hallucination_rate_pct": 5.6,
+        "eval_regression_pass_pct": 66,
+        "drift_psi": 0.17,
+        "prompt_variance": 0.25
+      },
+      "agentic_controls": null,
+      "governance_health": {
+        "review_overdue_days": 6,
+        "owner_risk_load": 7,
+        "raci_coverage_pct": 68,
+        "signoff_sla_breach_pct": 14,
+        "audit_finding_closure_pct": 68
+      },
+      "compliance": {
+        "control_mapping_pct": 70,
+        "compliance_test_pass_pct": 67,
+        "regulatory_change_impact": "high"
+      },
+      "incidents": {
+        "incidents_90d": 2,
+        "near_misses_90d": 4,
+        "repeat_incident_rate_pct": 12,
+        "root_cause_closure_pct": 66
+      },
+      "confidence": {
+        "assessment_confidence_pct": 75,
+        "evidence_completeness_pct": 66,
+        "source_count": 3
+      },
+      "dependency": {
+        "criticality": "high",
+        "third_party_spof": false,
+        "correlated_tags": [
+          "assurance"
+        ]
+      },
+      "predictive": {
+        "exposure_multiplier": 1.43,
+        "velocity_uplift": 0.2,
+        "confidence_weight": 0.75,
+        "predictive_score": 59,
+        "predictive_band": "medium"
+      }
+    },
+    {
+      "id": "AI-R-018",
+      "symbol": "MD",
+      "name": "Model Drift",
+      "description": "Model degrades over time.",
+      "category": "Model",
+      "likelihood": 4,
+      "impact": 4,
+      "score": 80,
+      "trend": "up",
+      "mitigation_status": "in_progress",
+      "owner": "ML Platform",
+      "mitigations": [
+        "Performance monitors",
+        "Retraining pipelines"
+      ],
+      "references": [
+        "NIST AI RMF MEASURE 2.5"
+      ],
+      "tags": [
+        "monitoring",
+        "mlops"
+      ],
+      "last_reviewed": "2026-10-04",
+      "risk_velocity": {
+        "score_delta_30d": 4,
+        "score_delta_90d": 8,
+        "momentum": "accelerating",
+        "days_since_change": 5
+      },
+      "control_effectiveness": {
+        "implementation_pct": 60,
+        "test_pass_rate_pct": 55,
+        "evidence_coverage_pct": 65,
+        "effectiveness_score": 59,
+        "residual_score": 33
+      },
+      "detection_response": {
+        "mttd_hours": 6,
+        "mttr_hours": 16,
+        "alert_coverage_pct": 86,
+        "rollback_time_hours": 4,
+        "dry_run_success_pct": 92
+      },
+      "exposure": {
+        "affected_systems": 5,
+        "affected_records": 600000,
+        "affected_users": 150000,
+        "data_sensitivity": "medium",
+        "external_facing": true,
+        "privilege_level": "low",
+        "autonomy_tier": 1
+      },
+      "assurance": {
+        "eval_coverage_pct": 70,
+        "red_team_coverage_pct": 44,
+        "framework_mapping_pct": 80,
+        "evidence_freshness_days": 18,
+        "independent_validation": false
+      },
+      "leading_indicators": {
+        "hallucination_rate_pct": 3.8,
+        "eval_regression_pass_pct": 77,
+        "drift_psi": 0.24,
+        "prompt_variance": 0.18
+      },
+      "agentic_controls": null,
+      "governance_health": {
+        "review_overdue_days": 1,
+        "owner_risk_load": 6,
+        "raci_coverage_pct": 80,
+        "signoff_sla_breach_pct": 6,
+        "audit_finding_closure_pct": 86
+      },
+      "compliance": {
+        "control_mapping_pct": 80,
+        "compliance_test_pass_pct": 78,
+        "regulatory_change_impact": "medium"
+      },
+      "incidents": {
+        "incidents_90d": 2,
+        "near_misses_90d": 3,
+        "repeat_incident_rate_pct": 7,
+        "root_cause_closure_pct": 82
+      },
+      "confidence": {
+        "assessment_confidence_pct": 82,
+        "evidence_completeness_pct": 78,
+        "source_count": 4
+      },
+      "dependency": {
+        "criticality": "high",
+        "third_party_spof": false,
+        "correlated_tags": [
+          "monitoring",
+          "mlops"
+        ]
+      },
+      "predictive": {
+        "exposure_multiplier": 1.25,
+        "velocity_uplift": 0.2,
+        "confidence_weight": 0.82,
+        "predictive_score": 41,
+        "predictive_band": "low"
+      }
+    },
+    {
+      "id": "AI-R-019",
+      "symbol": "PS",
+      "name": "Prompt Sensitivity",
+      "description": "Overly sensitive to prompts.",
+      "category": "Model",
+      "likelihood": 3,
+      "impact": 2,
+      "score": 48,
+      "trend": "flat",
+      "mitigation_status": "open",
+      "owner": "ML Research",
+      "mitigations": [
+        "Prompt regression tests",
+        "Input normalization"
+      ],
+      "references": [
+        "OWASP LLM01"
+      ],
+      "tags": [
+        "quality"
+      ],
+      "last_reviewed": "2026-07-25",
+      "risk_velocity": {
+        "score_delta_30d": 1,
+        "score_delta_90d": 2,
+        "momentum": "stable",
+        "days_since_change": 19
+      },
+      "control_effectiveness": {
+        "implementation_pct": 40,
+        "test_pass_rate_pct": 35,
+        "evidence_coverage_pct": 55,
+        "effectiveness_score": 41,
+        "residual_score": 28
+      },
+      "detection_response": {
+        "mttd_hours": 13,
+        "mttr_hours": 30,
+        "alert_coverage_pct": 70,
+        "rollback_time_hours": 7,
+        "dry_run_success_pct": 84
+      },
+      "exposure": {
+        "affected_systems": 3,
+        "affected_records": 50000,
+        "affected_users": 20000,
+        "data_sensitivity": "low",
+        "external_facing": true,
+        "privilege_level": "low",
+        "autonomy_tier": 1
+      },
+      "assurance": {
+        "eval_coverage_pct": 58,
+        "red_team_coverage_pct": 36,
+        "framework_mapping_pct": 68,
+        "evidence_freshness_days": 34,
+        "independent_validation": false
+      },
+      "leading_indicators": {
+        "hallucination_rate_pct": 4.6,
+        "eval_regression_pass_pct": 72,
+        "drift_psi": 0.11,
+        "prompt_variance": 0.38
+      },
+      "agentic_controls": null,
+      "governance_health": {
+        "review_overdue_days": 10,
+        "owner_risk_load": 4,
+        "raci_coverage_pct": 66,
+        "signoff_sla_breach_pct": 13,
+        "audit_finding_closure_pct": 72
+      },
+      "compliance": {
+        "control_mapping_pct": 68,
+        "compliance_test_pass_pct": 70,
+        "regulatory_change_impact": "low"
+      },
+      "incidents": {
+        "incidents_90d": 0,
+        "near_misses_90d": 2,
+        "repeat_incident_rate_pct": 5,
+        "root_cause_closure_pct": 76
+      },
+      "confidence": {
+        "assessment_confidence_pct": 70,
+        "evidence_completeness_pct": 62,
+        "source_count": 2
+      },
+      "dependency": {
+        "criticality": "medium",
+        "third_party_spof": false,
+        "correlated_tags": [
+          "quality"
+        ]
+      },
+      "predictive": {
+        "exposure_multiplier": 1.1,
+        "velocity_uplift": 0,
+        "confidence_weight": 0.7,
+        "predictive_score": 22,
+        "predictive_band": "safe"
+      }
+    },
+    {
+      "id": "AI-R-020",
+      "symbol": "MB",
+      "name": "Metric Blindness",
+      "description": "Wrong metrics mislead.",
+      "category": "Model",
+      "likelihood": 2,
+      "impact": 2,
+      "score": 40,
+      "trend": "flat",
+      "mitigation_status": "in_progress",
+      "owner": "ML Research",
+      "mitigations": [
+        "Metric review board",
+        "Business-aligned KPIs"
+      ],
+      "references": [
+        "NIST AI RMF MEASURE 2.1"
+      ],
+      "tags": [
+        "measurement"
+      ],
+      "last_reviewed": "2026-06-12",
+      "risk_velocity": {
+        "score_delta_30d": 0,
+        "score_delta_90d": 1,
+        "momentum": "stable",
+        "days_since_change": 32
+      },
+      "control_effectiveness": {
+        "implementation_pct": 45,
+        "test_pass_rate_pct": 40,
+        "evidence_coverage_pct": 55,
+        "effectiveness_score": 45,
+        "residual_score": 22
+      },
+      "detection_response": {
+        "mttd_hours": 17,
+        "mttr_hours": 34,
+        "alert_coverage_pct": 72,
+        "rollback_time_hours": 8,
+        "dry_run_success_pct": 82
+      },
+      "exposure": {
+        "affected_systems": 2,
+        "affected_records": 10000,
+        "affected_users": 5000,
+        "data_sensitivity": "low",
+        "external_facing": false,
+        "privilege_level": "low",
+        "autonomy_tier": 0
+      },
+      "assurance": {
+        "eval_coverage_pct": 56,
+        "red_team_coverage_pct": 28,
+        "framework_mapping_pct": 70,
+        "evidence_freshness_days": 36,
+        "independent_validation": false
+      },
+      "leading_indicators": {
+        "hallucination_rate_pct": 3,
+        "eval_regression_pass_pct": 82,
+        "drift_psi": 0.07,
+        "prompt_variance": 0.12
+      },
+      "agentic_controls": null,
+      "governance_health": {
+        "review_overdue_days": 9,
+        "owner_risk_load": 4,
+        "raci_coverage_pct": 68,
+        "signoff_sla_breach_pct": 12,
+        "audit_finding_closure_pct": 74
+      },
+      "compliance": {
+        "control_mapping_pct": 70,
+        "compliance_test_pass_pct": 72,
+        "regulatory_change_impact": "low"
+      },
+      "incidents": {
+        "incidents_90d": 0,
+        "near_misses_90d": 1,
+        "repeat_incident_rate_pct": 3,
+        "root_cause_closure_pct": 78
+      },
+      "confidence": {
+        "assessment_confidence_pct": 72,
+        "evidence_completeness_pct": 64,
+        "source_count": 2
+      },
+      "dependency": {
+        "criticality": "low",
+        "third_party_spof": false,
+        "correlated_tags": [
+          "measurement"
+        ]
+      },
+      "predictive": {
+        "exposure_multiplier": 1,
+        "velocity_uplift": 0,
+        "confidence_weight": 0.72,
+        "predictive_score": 16,
+        "predictive_band": "safe"
+      }
+    },
+    {
+      "id": "AI-R-021",
+      "symbol": "AH",
+      "name": "Autonomy Risk",
+      "description": "Too much autonomy.",
+      "category": "Agent",
+      "likelihood": 3,
+      "impact": 4,
+      "score": 72,
+      "trend": "up",
+      "mitigation_status": "in_progress",
+      "owner": "Agent Platform",
+      "mitigations": [
+        "Action approval gates",
+        "Scope limits"
+      ],
+      "references": [
+        "NIST AI 600-1"
+      ],
+      "tags": [
+        "agentic",
+        "control"
+      ],
+      "last_reviewed": "2026-10-06",
+      "risk_velocity": {
+        "score_delta_30d": 4,
+        "score_delta_90d": 8,
+        "momentum": "accelerating",
+        "days_since_change": 6
+      },
+      "control_effectiveness": {
+        "implementation_pct": 50,
+        "test_pass_rate_pct": 45,
+        "evidence_coverage_pct": 60,
+        "effectiveness_score": 50,
+        "residual_score": 36
+      },
+      "detection_response": {
+        "mttd_hours": 8,
+        "mttr_hours": 20,
+        "alert_coverage_pct": 80,
+        "rollback_time_hours": 6,
+        "dry_run_success_pct": 86
+      },
+      "exposure": {
+        "affected_systems": 6,
+        "affected_records": 300000,
+        "affected_users": 100000,
+        "data_sensitivity": "high",
+        "external_facing": true,
+        "privilege_level": "high",
+        "autonomy_tier": 3
+      },
+      "assurance": {
+        "eval_coverage_pct": 64,
+        "red_team_coverage_pct": 46,
+        "framework_mapping_pct": 74,
+        "evidence_freshness_days": 20,
+        "independent_validation": false
+      },
+      "leading_indicators": {
+        "tool_allowlist_coverage_pct": 72,
+        "approval_gate_coverage_pct": 65,
+        "step_budget_breaches_90d": 4,
+        "permission_scope_score": 68,
+        "loop_detection_rate_pct": 82
+      },
+      "agentic_controls": {
+        "tool_allowlist_coverage_pct": 72,
+        "approval_gate_coverage_pct": 65,
+        "step_budget_breaches_90d": 4,
+        "permission_scope_score": 68,
+        "loop_detection_rate_pct": 82
+      },
+      "governance_health": {
+        "review_overdue_days": 2,
+        "owner_risk_load": 6,
+        "raci_coverage_pct": 76,
+        "signoff_sla_breach_pct": 8,
+        "audit_finding_closure_pct": 80
+      },
+      "compliance": {
+        "control_mapping_pct": 74,
+        "compliance_test_pass_pct": 73,
+        "regulatory_change_impact": "high"
+      },
+      "incidents": {
+        "incidents_90d": 2,
+        "near_misses_90d": 4,
+        "repeat_incident_rate_pct": 10,
+        "root_cause_closure_pct": 74
+      },
+      "confidence": {
+        "assessment_confidence_pct": 80,
+        "evidence_completeness_pct": 74,
+        "source_count": 4
+      },
+      "dependency": {
+        "criticality": "high",
+        "third_party_spof": false,
+        "correlated_tags": [
+          "agentic",
+          "control"
+        ]
+      },
+      "predictive": {
+        "exposure_multiplier": 1.51,
+        "velocity_uplift": 0.2,
+        "confidence_weight": 0.8,
+        "predictive_score": 52,
+        "predictive_band": "medium"
+      }
+    },
+    {
+      "id": "AI-R-022",
+      "symbol": "TM",
+      "name": "Tool Misuse",
+      "description": "Tools used incorrectly.",
+      "category": "Agent",
+      "likelihood": 3,
+      "impact": 3,
+      "score": 60,
+      "trend": "up",
+      "mitigation_status": "open",
+      "owner": "Agent Platform",
+      "mitigations": [
+        "Tool allowlists",
+        "Sandboxed exec"
+      ],
+      "references": [
+        "OWASP LLM08"
+      ],
+      "tags": [
+        "agentic",
+        "tooling"
+      ],
+      "last_reviewed": "2026-09-10",
+      "risk_velocity": {
+        "score_delta_30d": 3,
+        "score_delta_90d": 6,
+        "momentum": "accelerating",
+        "days_since_change": 8
+      },
+      "control_effectiveness": {
+        "implementation_pct": 40,
+        "test_pass_rate_pct": 35,
+        "evidence_coverage_pct": 55,
+        "effectiveness_score": 41,
+        "residual_score": 35
+      },
+      "detection_response": {
+        "mttd_hours": 7,
+        "mttr_hours": 18,
+        "alert_coverage_pct": 78,
+        "rollback_time_hours": 7,
+        "dry_run_success_pct": 84
+      },
+      "exposure": {
+        "affected_systems": 5,
+        "affected_records": 200000,
+        "affected_users": 80000,
+        "data_sensitivity": "medium",
+        "external_facing": true,
+        "privilege_level": "high",
+        "autonomy_tier": 3
+      },
+      "assurance": {
+        "eval_coverage_pct": 60,
+        "red_team_coverage_pct": 44,
+        "framework_mapping_pct": 72,
+        "evidence_freshness_days": 24,
+        "independent_validation": false
+      },
+      "leading_indicators": {
+        "tool_allowlist_coverage_pct": 58,
+        "approval_gate_coverage_pct": 52,
+        "step_budget_breaches_90d": 7,
+        "permission_scope_score": 60,
+        "loop_detection_rate_pct": 74
+      },
+      "agentic_controls": {
+        "tool_allowlist_coverage_pct": 58,
+        "approval_gate_coverage_pct": 52,
+        "step_budget_breaches_90d": 7,
+        "permission_scope_score": 60,
+        "loop_detection_rate_pct": 74
+      },
+      "governance_health": {
+        "review_overdue_days": 5,
+        "owner_risk_load": 6,
+        "raci_coverage_pct": 72,
+        "signoff_sla_breach_pct": 11,
+        "audit_finding_closure_pct": 76
+      },
+      "compliance": {
+        "control_mapping_pct": 72,
+        "compliance_test_pass_pct": 70,
+        "regulatory_change_impact": "medium"
+      },
+      "incidents": {
+        "incidents_90d": 1,
+        "near_misses_90d": 3,
+        "repeat_incident_rate_pct": 9,
+        "root_cause_closure_pct": 72
+      },
+      "confidence": {
+        "assessment_confidence_pct": 75,
+        "evidence_completeness_pct": 70,
+        "source_count": 3
+      },
+      "dependency": {
+        "criticality": "high",
+        "third_party_spof": false,
+        "correlated_tags": [
+          "agentic",
+          "tooling"
+        ]
+      },
+      "predictive": {
+        "exposure_multiplier": 1.41,
+        "velocity_uplift": 0.2,
+        "confidence_weight": 0.75,
+        "predictive_score": 44,
+        "predictive_band": "low"
+      }
+    },
+    {
+      "id": "AI-R-023",
+      "symbol": "UA",
+      "name": "Unintended Actions",
+      "description": "Actions not as intended.",
+      "category": "Agent",
+      "likelihood": 4,
+      "impact": 4,
+      "score": 80,
+      "trend": "up",
+      "mitigation_status": "in_progress",
+      "owner": "Agent Platform",
+      "mitigations": [
+        "Dry-run mode",
+        "Confirmation flows"
+      ],
+      "references": [
+        "NIST AI RMF MANAGE 2.2"
+      ],
+      "tags": [
+        "agentic",
+        "safety"
+      ],
+      "last_reviewed": "2026-10-01",
+      "risk_velocity": {
+        "score_delta_30d": 4,
+        "score_delta_90d": 9,
+        "momentum": "accelerating",
+        "days_since_change": 5
+      },
+      "control_effectiveness": {
+        "implementation_pct": 55,
+        "test_pass_rate_pct": 50,
+        "evidence_coverage_pct": 65,
+        "effectiveness_score": 55,
+        "residual_score": 36
+      },
+      "detection_response": {
+        "mttd_hours": 6,
+        "mttr_hours": 16,
+        "alert_coverage_pct": 82,
+        "rollback_time_hours": 5,
+        "dry_run_success_pct": 88
+      },
+      "exposure": {
+        "affected_systems": 7,
+        "affected_records": 400000,
+        "affected_users": 120000,
+        "data_sensitivity": "high",
+        "external_facing": true,
+        "privilege_level": "high",
+        "autonomy_tier": 3
+      },
+      "assurance": {
+        "eval_coverage_pct": 66,
+        "red_team_coverage_pct": 50,
+        "framework_mapping_pct": 76,
+        "evidence_freshness_days": 18,
+        "independent_validation": false
+      },
+      "leading_indicators": {
+        "tool_allowlist_coverage_pct": 68,
+        "approval_gate_coverage_pct": 62,
+        "step_budget_breaches_90d": 5,
+        "permission_scope_score": 64,
+        "loop_detection_rate_pct": 80
+      },
+      "agentic_controls": {
+        "tool_allowlist_coverage_pct": 68,
+        "approval_gate_coverage_pct": 62,
+        "step_budget_breaches_90d": 5,
+        "permission_scope_score": 64,
+        "loop_detection_rate_pct": 80
+      },
+      "governance_health": {
+        "review_overdue_days": 1,
+        "owner_risk_load": 7,
+        "raci_coverage_pct": 78,
+        "signoff_sla_breach_pct": 7,
+        "audit_finding_closure_pct": 82
+      },
+      "compliance": {
+        "control_mapping_pct": 76,
+        "compliance_test_pass_pct": 74,
+        "regulatory_change_impact": "high"
+      },
+      "incidents": {
+        "incidents_90d": 2,
+        "near_misses_90d": 5,
+        "repeat_incident_rate_pct": 12,
+        "root_cause_closure_pct": 72
+      },
+      "confidence": {
+        "assessment_confidence_pct": 82,
+        "evidence_completeness_pct": 76,
+        "source_count": 4
+      },
+      "dependency": {
+        "criticality": "critical",
+        "third_party_spof": false,
+        "correlated_tags": [
+          "agentic",
+          "safety"
+        ]
+      },
+      "predictive": {
+        "exposure_multiplier": 1.51,
+        "velocity_uplift": 0.2,
+        "confidence_weight": 0.82,
+        "predictive_score": 54,
+        "predictive_band": "medium"
+      }
+    },
+    {
+      "id": "AI-R-024",
+      "symbol": "PE",
+      "name": "Permission Escalation",
+      "description": "Excessive privileges.",
+      "category": "Security",
+      "likelihood": 4,
+      "impact": 5,
+      "score": 92,
+      "trend": "up",
+      "mitigation_status": "open",
+      "owner": "AppSec",
+      "mitigations": [
+        "Least privilege",
+        "Scoped tokens",
+        "Runtime policy"
+      ],
+      "references": [
+        "CIS Controls 4",
+        "OWASP LLM02"
+      ],
+      "tags": [
+        "exploit",
+        "security-critical"
+      ],
+      "last_reviewed": "2026-10-11",
+      "risk_velocity": {
+        "score_delta_30d": 6,
+        "score_delta_90d": 12,
+        "momentum": "accelerating",
+        "days_since_change": 3
+      },
+      "control_effectiveness": {
+        "implementation_pct": 30,
+        "test_pass_rate_pct": 25,
+        "evidence_coverage_pct": 45,
+        "effectiveness_score": 31,
+        "residual_score": 63
+      },
+      "detection_response": {
+        "mttd_hours": 3,
+        "mttr_hours": 10,
+        "alert_coverage_pct": 84,
+        "rollback_time_hours": 6,
+        "dry_run_success_pct": 80
+      },
+      "exposure": {
+        "affected_systems": 8,
+        "affected_records": 1500000,
+        "affected_users": 400000,
+        "data_sensitivity": "critical",
+        "external_facing": true,
+        "privilege_level": "critical",
+        "autonomy_tier": 2
+      },
+      "assurance": {
+        "eval_coverage_pct": 62,
+        "red_team_coverage_pct": 54,
+        "framework_mapping_pct": 72,
+        "evidence_freshness_days": 12,
+        "independent_validation": false
+      },
+      "leading_indicators": {
+        "injection_success_pct": 3.4,
+        "secret_findings": 9,
+        "token_ttl_hours": 24,
+        "egress_block_coverage_pct": 68,
+        "vuln_age_days": 52,
+        "epss": 0.38
+      },
+      "agentic_controls": null,
+      "governance_health": {
+        "review_overdue_days": 0,
+        "owner_risk_load": 8,
+        "raci_coverage_pct": 70,
+        "signoff_sla_breach_pct": 12,
+        "audit_finding_closure_pct": 64
+      },
+      "compliance": {
+        "control_mapping_pct": 72,
+        "compliance_test_pass_pct": 64,
+        "regulatory_change_impact": "high"
+      },
+      "incidents": {
+        "incidents_90d": 3,
+        "near_misses_90d": 6,
+        "repeat_incident_rate_pct": 16,
+        "root_cause_closure_pct": 58
+      },
+      "confidence": {
+        "assessment_confidence_pct": 85,
+        "evidence_completeness_pct": 80,
+        "source_count": 5
+      },
+      "dependency": {
+        "criticality": "critical",
+        "third_party_spof": true,
+        "correlated_tags": [
+          "exploit",
+          "security-critical"
+        ]
+      },
+      "predictive": {
+        "exposure_multiplier": 1.75,
+        "velocity_uplift": 0.2,
+        "confidence_weight": 0.85,
+        "predictive_score": 100,
+        "predictive_band": "critical"
+      }
+    },
+    {
+      "id": "AI-R-025",
+      "symbol": "IN",
+      "name": "Prompt Injection",
+      "description": "Malicious prompt manipulation.",
+      "category": "Security",
+      "likelihood": 5,
+      "impact": 5,
+      "score": 100,
+      "trend": "up",
+      "mitigation_status": "open",
+      "owner": "AppSec",
+      "mitigations": [
+        "Input sanitization",
+        "Instruction hierarchy",
+        "Sandboxed execution"
+      ],
+      "references": [
+        "OWASP LLM01",
+        "NIST AI 100-2"
+      ],
+      "tags": [
+        "exploit",
+        "security-critical"
+      ],
+      "last_reviewed": "2026-10-14",
+      "risk_velocity": {
+        "score_delta_30d": 6,
+        "score_delta_90d": 14,
+        "momentum": "accelerating",
+        "days_since_change": 2
+      },
+      "control_effectiveness": {
+        "implementation_pct": 25,
+        "test_pass_rate_pct": 20,
+        "evidence_coverage_pct": 40,
+        "effectiveness_score": 26,
+        "residual_score": 74
+      },
+      "detection_response": {
+        "mttd_hours": 2,
+        "mttr_hours": 8,
+        "alert_coverage_pct": 86,
+        "rollback_time_hours": 5,
+        "dry_run_success_pct": 76
+      },
+      "exposure": {
+        "affected_systems": 10,
+        "affected_records": 2000000,
+        "affected_users": 1000000,
+        "data_sensitivity": "critical",
+        "external_facing": true,
+        "privilege_level": "critical",
+        "autonomy_tier": 2
+      },
+      "assurance": {
+        "eval_coverage_pct": 60,
+        "red_team_coverage_pct": 58,
+        "framework_mapping_pct": 70,
+        "evidence_freshness_days": 10,
+        "independent_validation": false
+      },
+      "leading_indicators": {
+        "injection_success_pct": 8.7,
+        "secret_findings": 11,
+        "token_ttl_hours": 24,
+        "egress_block_coverage_pct": 62,
+        "vuln_age_days": 60,
+        "epss": 0.52
+      },
+      "agentic_controls": null,
+      "governance_health": {
+        "review_overdue_days": 0,
+        "owner_risk_load": 9,
+        "raci_coverage_pct": 68,
+        "signoff_sla_breach_pct": 14,
+        "audit_finding_closure_pct": 60
+      },
+      "compliance": {
+        "control_mapping_pct": 70,
+        "compliance_test_pass_pct": 60,
+        "regulatory_change_impact": "high"
+      },
+      "incidents": {
+        "incidents_90d": 4,
+        "near_misses_90d": 8,
+        "repeat_incident_rate_pct": 22,
+        "root_cause_closure_pct": 54
+      },
+      "confidence": {
+        "assessment_confidence_pct": 92,
+        "evidence_completeness_pct": 86,
+        "source_count": 6
+      },
+      "dependency": {
+        "criticality": "critical",
+        "third_party_spof": true,
+        "correlated_tags": [
+          "exploit",
+          "security-critical"
+        ]
+      },
+      "predictive": {
+        "exposure_multiplier": 1.75,
+        "velocity_uplift": 0.2,
+        "confidence_weight": 0.92,
+        "predictive_score": 100,
+        "predictive_band": "critical"
+      }
+    },
+    {
+      "id": "AI-R-026",
+      "symbol": "SM",
+      "name": "Social Manipulation",
+      "description": "Exploited by social tricks.",
+      "category": "Security",
+      "likelihood": 3,
+      "impact": 4,
+      "score": 72,
+      "trend": "up",
+      "mitigation_status": "in_progress",
+      "owner": "Security",
+      "mitigations": [
+        "Content moderation",
+        "User education"
+      ],
+      "references": [
+        "NIST AI RMF MANAGE 2.1"
+      ],
+      "tags": [
+        "abuse"
+      ],
+      "last_reviewed": "2026-09-28",
+      "risk_velocity": {
+        "score_delta_30d": 4,
+        "score_delta_90d": 8,
+        "momentum": "accelerating",
+        "days_since_change": 7
+      },
+      "control_effectiveness": {
+        "implementation_pct": 45,
+        "test_pass_rate_pct": 40,
+        "evidence_coverage_pct": 55,
+        "effectiveness_score": 45,
+        "residual_score": 40
+      },
+      "detection_response": {
+        "mttd_hours": 9,
+        "mttr_hours": 22,
+        "alert_coverage_pct": 76,
+        "rollback_time_hours": 8,
+        "dry_run_success_pct": 82
+      },
+      "exposure": {
+        "affected_systems": 4,
+        "affected_records": 500000,
+        "affected_users": 200000,
+        "data_sensitivity": "high",
+        "external_facing": true,
+        "privilege_level": "medium",
+        "autonomy_tier": 1
+      },
+      "assurance": {
+        "eval_coverage_pct": 62,
+        "red_team_coverage_pct": 42,
+        "framework_mapping_pct": 72,
+        "evidence_freshness_days": 26,
+        "independent_validation": false
+      },
+      "leading_indicators": {
+        "injection_success_pct": 2.8,
+        "secret_findings": 5,
+        "token_ttl_hours": 12,
+        "egress_block_coverage_pct": 78,
+        "vuln_age_days": 40,
+        "epss": 0.28
+      },
+      "agentic_controls": null,
+      "governance_health": {
+        "review_overdue_days": 3,
+        "owner_risk_load": 6,
+        "raci_coverage_pct": 72,
+        "signoff_sla_breach_pct": 9,
+        "audit_finding_closure_pct": 76
+      },
+      "compliance": {
+        "control_mapping_pct": 72,
+        "compliance_test_pass_pct": 70,
+        "regulatory_change_impact": "medium"
+      },
+      "incidents": {
+        "incidents_90d": 2,
+        "near_misses_90d": 3,
+        "repeat_incident_rate_pct": 9,
+        "root_cause_closure_pct": 72
+      },
+      "confidence": {
+        "assessment_confidence_pct": 78,
+        "evidence_completeness_pct": 72,
+        "source_count": 3
+      },
+      "dependency": {
+        "criticality": "medium",
+        "third_party_spof": false,
+        "correlated_tags": [
+          "abuse"
+        ]
+      },
+      "predictive": {
+        "exposure_multiplier": 1.43,
+        "velocity_uplift": 0.2,
+        "confidence_weight": 0.78,
+        "predictive_score": 54,
+        "predictive_band": "medium"
+      }
+    },
+    {
+      "id": "AI-R-027",
+      "symbol": "DG",
+      "name": "Delegation Risk",
+      "description": "Risky task delegation.",
+      "category": "Agent",
+      "likelihood": 2,
+      "impact": 3,
+      "score": 52,
+      "trend": "flat",
+      "mitigation_status": "in_progress",
+      "owner": "Agent Platform",
+      "mitigations": [
+        "Delegation policies",
+        "Human-in-loop"
+      ],
+      "references": [
+        "NIST AI RMF GOVERN 1.2"
+      ],
+      "tags": [
+        "agentic"
+      ],
+      "last_reviewed": "2026-08-08",
+      "risk_velocity": {
+        "score_delta_30d": 1,
+        "score_delta_90d": 2,
+        "momentum": "stable",
+        "days_since_change": 21
+      },
+      "control_effectiveness": {
+        "implementation_pct": 50,
+        "test_pass_rate_pct": 45,
+        "evidence_coverage_pct": 60,
+        "effectiveness_score": 50,
+        "residual_score": 26
+      },
+      "detection_response": {
+        "mttd_hours": 12,
+        "mttr_hours": 26,
+        "alert_coverage_pct": 74,
+        "rollback_time_hours": 9,
+        "dry_run_success_pct": 84
+      },
+      "exposure": {
+        "affected_systems": 3,
+        "affected_records": 100000,
+        "affected_users": 30000,
+        "data_sensitivity": "medium",
+        "external_facing": false,
+        "privilege_level": "medium",
+        "autonomy_tier": 2
+      },
+      "assurance": {
+        "eval_coverage_pct": 58,
+        "red_team_coverage_pct": 34,
+        "framework_mapping_pct": 70,
+        "evidence_freshness_days": 30,
+        "independent_validation": false
+      },
+      "leading_indicators": {
+        "tool_allowlist_coverage_pct": 66,
+        "approval_gate_coverage_pct": 60,
+        "step_budget_breaches_90d": 2,
+        "permission_scope_score": 62,
+        "loop_detection_rate_pct": 78
+      },
+      "agentic_controls": {
+        "tool_allowlist_coverage_pct": 66,
+        "approval_gate_coverage_pct": 60,
+        "step_budget_breaches_90d": 2,
+        "permission_scope_score": 62,
+        "loop_detection_rate_pct": 78
+      },
+      "governance_health": {
+        "review_overdue_days": 7,
+        "owner_risk_load": 5,
+        "raci_coverage_pct": 70,
+        "signoff_sla_breach_pct": 10,
+        "audit_finding_closure_pct": 74
+      },
+      "compliance": {
+        "control_mapping_pct": 70,
+        "compliance_test_pass_pct": 72,
+        "regulatory_change_impact": "medium"
+      },
+      "incidents": {
+        "incidents_90d": 0,
+        "near_misses_90d": 2,
+        "repeat_incident_rate_pct": 4,
+        "root_cause_closure_pct": 78
+      },
+      "confidence": {
+        "assessment_confidence_pct": 76,
+        "evidence_completeness_pct": 68,
+        "source_count": 3
+      },
+      "dependency": {
+        "criticality": "medium",
+        "third_party_spof": false,
+        "correlated_tags": [
+          "agentic"
+        ]
+      },
+      "predictive": {
+        "exposure_multiplier": 1.23,
+        "velocity_uplift": 0,
+        "confidence_weight": 0.76,
+        "predictive_score": 24,
+        "predictive_band": "safe"
+      }
+    },
+    {
+      "id": "AI-R-028",
+      "symbol": "MR",
+      "name": "Memory Risk",
+      "description": "Sensitive memory exposure.",
+      "category": "Agent",
+      "likelihood": 3,
+      "impact": 3,
+      "score": 60,
+      "trend": "up",
+      "mitigation_status": "open",
+      "owner": "Agent Platform",
+      "mitigations": [
+        "Memory TTLs",
+        "PII scrubbing"
+      ],
+      "references": [
+        "GDPR Art. 5"
+      ],
+      "tags": [
+        "privacy",
+        "agentic"
+      ],
+      "last_reviewed": "2026-09-19",
+      "risk_velocity": {
+        "score_delta_30d": 3,
+        "score_delta_90d": 6,
+        "momentum": "accelerating",
+        "days_since_change": 8
+      },
+      "control_effectiveness": {
+        "implementation_pct": 45,
+        "test_pass_rate_pct": 40,
+        "evidence_coverage_pct": 55,
+        "effectiveness_score": 45,
+        "residual_score": 33
+      },
+      "detection_response": {
+        "mttd_hours": 8,
+        "mttr_hours": 20,
+        "alert_coverage_pct": 76,
+        "rollback_time_hours": 7,
+        "dry_run_success_pct": 82
+      },
+      "exposure": {
+        "affected_systems": 4,
+        "affected_records": 200000,
+        "affected_users": 60000,
+        "data_sensitivity": "high",
+        "external_facing": true,
+        "privilege_level": "medium",
+        "autonomy_tier": 2
+      },
+      "assurance": {
+        "eval_coverage_pct": 60,
+        "red_team_coverage_pct": 38,
+        "framework_mapping_pct": 70,
+        "evidence_freshness_days": 24,
+        "independent_validation": false
+      },
+      "leading_indicators": {
+        "tool_allowlist_coverage_pct": 62,
+        "approval_gate_coverage_pct": 56,
+        "step_budget_breaches_90d": 3,
+        "permission_scope_score": 58,
+        "loop_detection_rate_pct": 76
+      },
+      "agentic_controls": {
+        "tool_allowlist_coverage_pct": 62,
+        "approval_gate_coverage_pct": 56,
+        "step_budget_breaches_90d": 3,
+        "permission_scope_score": 58,
+        "loop_detection_rate_pct": 76
+      },
+      "governance_health": {
+        "review_overdue_days": 4,
+        "owner_risk_load": 6,
+        "raci_coverage_pct": 70,
+        "signoff_sla_breach_pct": 10,
+        "audit_finding_closure_pct": 74
+      },
+      "compliance": {
+        "control_mapping_pct": 70,
+        "compliance_test_pass_pct": 68,
+        "regulatory_change_impact": "high"
+      },
+      "incidents": {
+        "incidents_90d": 1,
+        "near_misses_90d": 3,
+        "repeat_incident_rate_pct": 7,
+        "root_cause_closure_pct": 72
+      },
+      "confidence": {
+        "assessment_confidence_pct": 75,
+        "evidence_completeness_pct": 70,
+        "source_count": 3
+      },
+      "dependency": {
+        "criticality": "high",
+        "third_party_spof": false,
+        "correlated_tags": [
+          "privacy",
+          "agentic"
+        ]
+      },
+      "predictive": {
+        "exposure_multiplier": 1.43,
+        "velocity_uplift": 0.2,
+        "confidence_weight": 0.75,
+        "predictive_score": 43,
+        "predictive_band": "low"
+      }
+    },
+    {
+      "id": "AI-R-029",
+      "symbol": "LF",
+      "name": "Loop Failure",
+      "description": "Agents repeat bad actions.",
+      "category": "Agent",
+      "likelihood": 2,
+      "impact": 3,
+      "score": 52,
+      "trend": "flat",
+      "mitigation_status": "in_progress",
+      "owner": "Agent Platform",
+      "mitigations": [
+        "Step budgets",
+        "Loop detection"
+      ],
+      "references": [
+        "NIST AI 600-1"
+      ],
+      "tags": [
+        "agentic",
+        "reliability"
+      ],
+      "last_reviewed": "2026-08-22",
+      "risk_velocity": {
+        "score_delta_30d": 1,
+        "score_delta_90d": 2,
+        "momentum": "stable",
+        "days_since_change": 20
+      },
+      "control_effectiveness": {
+        "implementation_pct": 55,
+        "test_pass_rate_pct": 50,
+        "evidence_coverage_pct": 65,
+        "effectiveness_score": 55,
+        "residual_score": 23
+      },
+      "detection_response": {
+        "mttd_hours": 10,
+        "mttr_hours": 24,
+        "alert_coverage_pct": 78,
+        "rollback_time_hours": 8,
+        "dry_run_success_pct": 86
+      },
+      "exposure": {
+        "affected_systems": 3,
+        "affected_records": 50000,
+        "affected_users": 20000,
+        "data_sensitivity": "low",
+        "external_facing": true,
+        "privilege_level": "medium",
+        "autonomy_tier": 3
+      },
+      "assurance": {
+        "eval_coverage_pct": 62,
+        "red_team_coverage_pct": 36,
+        "framework_mapping_pct": 72,
+        "evidence_freshness_days": 28,
+        "independent_validation": false
+      },
+      "leading_indicators": {
+        "tool_allowlist_coverage_pct": 70,
+        "approval_gate_coverage_pct": 64,
+        "step_budget_breaches_90d": 1,
+        "permission_scope_score": 66,
+        "loop_detection_rate_pct": 84
+      },
+      "agentic_controls": {
+        "tool_allowlist_coverage_pct": 70,
+        "approval_gate_coverage_pct": 64,
+        "step_budget_breaches_90d": 1,
+        "permission_scope_score": 66,
+        "loop_detection_rate_pct": 84
+      },
+      "governance_health": {
+        "review_overdue_days": 6,
+        "owner_risk_load": 5,
+        "raci_coverage_pct": 72,
+        "signoff_sla_breach_pct": 9,
+        "audit_finding_closure_pct": 76
+      },
+      "compliance": {
+        "control_mapping_pct": 72,
+        "compliance_test_pass_pct": 73,
+        "regulatory_change_impact": "low"
+      },
+      "incidents": {
+        "incidents_90d": 0,
+        "near_misses_90d": 2,
+        "repeat_incident_rate_pct": 4,
+        "root_cause_closure_pct": 80
+      },
+      "confidence": {
+        "assessment_confidence_pct": 78,
+        "evidence_completeness_pct": 70,
+        "source_count": 3
+      },
+      "dependency": {
+        "criticality": "medium",
+        "third_party_spof": false,
+        "correlated_tags": [
+          "agentic",
+          "reliability"
+        ]
+      },
+      "predictive": {
+        "exposure_multiplier": 1.18,
+        "velocity_uplift": 0,
+        "confidence_weight": 0.78,
+        "predictive_score": 21,
+        "predictive_band": "safe"
+      }
+    },
+    {
+      "id": "AI-R-030",
+      "symbol": "RG",
+      "name": "Rollback Gap",
+      "description": "Harmful actions cannot be safely reverted.",
+      "category": "Agent",
+      "likelihood": 3,
+      "impact": 4,
+      "score": 72,
+      "trend": "up",
+      "mitigation_status": "open",
+      "owner": "Agent Platform",
+      "mitigations": [
+        "Transactional actions",
+        "Snapshots"
+      ],
+      "references": [
+        "NIST AI RMF MANAGE 3.1"
+      ],
+      "tags": [
+        "agentic",
+        "recovery"
+      ],
+      "last_reviewed": "2026-09-30",
+      "risk_velocity": {
+        "score_delta_30d": 4,
+        "score_delta_90d": 8,
+        "momentum": "accelerating",
+        "days_since_change": 6
+      },
+      "control_effectiveness": {
+        "implementation_pct": 35,
+        "test_pass_rate_pct": 30,
+        "evidence_coverage_pct": 50,
+        "effectiveness_score": 36,
+        "residual_score": 46
+      },
+      "detection_response": {
+        "mttd_hours": 7,
+        "mttr_hours": 18,
+        "alert_coverage_pct": 74,
+        "rollback_time_hours": 24,
+        "dry_run_success_pct": 68
+      },
+      "exposure": {
+        "affected_systems": 5,
+        "affected_records": 300000,
+        "affected_users": 90000,
+        "data_sensitivity": "high",
+        "external_facing": true,
+        "privilege_level": "high",
+        "autonomy_tier": 3
+      },
+      "assurance": {
+        "eval_coverage_pct": 56,
+        "red_team_coverage_pct": 40,
+        "framework_mapping_pct": 68,
+        "evidence_freshness_days": 30,
+        "independent_validation": false
+      },
+      "leading_indicators": {
+        "tool_allowlist_coverage_pct": 60,
+        "approval_gate_coverage_pct": 54,
+        "step_budget_breaches_90d": 5,
+        "permission_scope_score": 56,
+        "loop_detection_rate_pct": 72
+      },
+      "agentic_controls": {
+        "tool_allowlist_coverage_pct": 60,
+        "approval_gate_coverage_pct": 54,
+        "step_budget_breaches_90d": 5,
+        "permission_scope_score": 56,
+        "loop_detection_rate_pct": 72
+      },
+      "governance_health": {
+        "review_overdue_days": 5,
+        "owner_risk_load": 7,
+        "raci_coverage_pct": 68,
+        "signoff_sla_breach_pct": 13,
+        "audit_finding_closure_pct": 68
+      },
+      "compliance": {
+        "control_mapping_pct": 68,
+        "compliance_test_pass_pct": 66,
+        "regulatory_change_impact": "high"
+      },
+      "incidents": {
+        "incidents_90d": 2,
+        "near_misses_90d": 4,
+        "repeat_incident_rate_pct": 11,
+        "root_cause_closure_pct": 66
+      },
+      "confidence": {
+        "assessment_confidence_pct": 72,
+        "evidence_completeness_pct": 64,
+        "source_count": 3
+      },
+      "dependency": {
+        "criticality": "high",
+        "third_party_spof": false,
+        "correlated_tags": [
+          "agentic",
+          "recovery"
+        ]
+      },
+      "predictive": {
+        "exposure_multiplier": 1.51,
+        "velocity_uplift": 0.2,
+        "confidence_weight": 0.72,
+        "predictive_score": 60,
+        "predictive_band": "medium"
+      }
+    },
+    {
+      "id": "AI-R-031",
+      "symbol": "VP",
+      "name": "Vulnerability",
+      "description": "Exploitable weaknesses.",
+      "category": "Security",
+      "likelihood": 4,
+      "impact": 4,
+      "score": 80,
+      "trend": "up",
+      "mitigation_status": "in_progress",
+      "owner": "AppSec",
+      "mitigations": [
+        "SAST/DAST",
+        "Dependency scanning"
+      ],
+      "references": [
+        "CIS Controls 16"
+      ],
+      "tags": [
+        "exploit"
+      ],
+      "last_reviewed": "2026-10-05",
+      "risk_velocity": {
+        "score_delta_30d": 4,
+        "score_delta_90d": 9,
+        "momentum": "accelerating",
+        "days_since_change": 5
+      },
+      "control_effectiveness": {
+        "implementation_pct": 55,
+        "test_pass_rate_pct": 50,
+        "evidence_coverage_pct": 65,
+        "effectiveness_score": 55,
+        "residual_score": 36
+      },
+      "detection_response": {
+        "mttd_hours": 4,
+        "mttr_hours": 12,
+        "alert_coverage_pct": 84,
+        "rollback_time_hours": 6,
+        "dry_run_success_pct": 86
+      },
+      "exposure": {
+        "affected_systems": 8,
+        "affected_records": 800000,
+        "affected_users": 250000,
+        "data_sensitivity": "high",
+        "external_facing": true,
+        "privilege_level": "high",
+        "autonomy_tier": 0
+      },
+      "assurance": {
+        "eval_coverage_pct": 66,
+        "red_team_coverage_pct": 56,
+        "framework_mapping_pct": 78,
+        "evidence_freshness_days": 16,
+        "independent_validation": false
+      },
+      "leading_indicators": {
+        "injection_success_pct": 2.4,
+        "secret_findings": 8,
+        "token_ttl_hours": 12,
+        "egress_block_coverage_pct": 76,
+        "vuln_age_days": 48,
+        "epss": 0.34
+      },
+      "agentic_controls": null,
+      "governance_health": {
+        "review_overdue_days": 1,
+        "owner_risk_load": 7,
+        "raci_coverage_pct": 76,
+        "signoff_sla_breach_pct": 8,
+        "audit_finding_closure_pct": 80
+      },
+      "compliance": {
+        "control_mapping_pct": 78,
+        "compliance_test_pass_pct": 76,
+        "regulatory_change_impact": "medium"
+      },
+      "incidents": {
+        "incidents_90d": 3,
+        "near_misses_90d": 4,
+        "repeat_incident_rate_pct": 10,
+        "root_cause_closure_pct": 74
+      },
+      "confidence": {
+        "assessment_confidence_pct": 85,
+        "evidence_completeness_pct": 80,
+        "source_count": 4
+      },
+      "dependency": {
+        "criticality": "high",
+        "third_party_spof": false,
+        "correlated_tags": [
+          "exploit"
+        ]
+      },
+      "predictive": {
+        "exposure_multiplier": 1.51,
+        "velocity_uplift": 0.2,
+        "confidence_weight": 0.85,
+        "predictive_score": 55,
+        "predictive_band": "medium"
+      }
+    },
+    {
+      "id": "AI-R-032",
+      "symbol": "CT",
+      "name": "Cyber Threats",
+      "description": "External attacks and intrusions.",
+      "category": "Security",
+      "likelihood": 4,
+      "impact": 4,
+      "score": 80,
+      "trend": "up",
+      "mitigation_status": "in_progress",
+      "owner": "Security",
+      "mitigations": [
+        "WAF",
+        "Rate limiting",
+        "Threat intel"
+      ],
+      "references": [
+        "CIS Controls 13"
+      ],
+      "tags": [
+        "exploit"
+      ],
+      "last_reviewed": "2026-10-03",
+      "risk_velocity": {
+        "score_delta_30d": 4,
+        "score_delta_90d": 9,
+        "momentum": "accelerating",
+        "days_since_change": 6
+      },
+      "control_effectiveness": {
+        "implementation_pct": 60,
+        "test_pass_rate_pct": 55,
+        "evidence_coverage_pct": 70,
+        "effectiveness_score": 60,
+        "residual_score": 32
+      },
+      "detection_response": {
+        "mttd_hours": 3,
+        "mttr_hours": 10,
+        "alert_coverage_pct": 88,
+        "rollback_time_hours": 5,
+        "dry_run_success_pct": 88
+      },
+      "exposure": {
+        "affected_systems": 9,
+        "affected_records": 1000000,
+        "affected_users": 300000,
+        "data_sensitivity": "high",
+        "external_facing": true,
+        "privilege_level": "high",
+        "autonomy_tier": 0
+      },
+      "assurance": {
+        "eval_coverage_pct": 68,
+        "red_team_coverage_pct": 58,
+        "framework_mapping_pct": 80,
+        "evidence_freshness_days": 14,
+        "independent_validation": false
+      },
+      "leading_indicators": {
+        "injection_success_pct": 2,
+        "secret_findings": 6,
+        "token_ttl_hours": 12,
+        "egress_block_coverage_pct": 82,
+        "vuln_age_days": 36,
+        "epss": 0.25
+      },
+      "agentic_controls": null,
+      "governance_health": {
+        "review_overdue_days": 1,
+        "owner_risk_load": 7,
+        "raci_coverage_pct": 78,
+        "signoff_sla_breach_pct": 7,
+        "audit_finding_closure_pct": 82
+      },
+      "compliance": {
+        "control_mapping_pct": 80,
+        "compliance_test_pass_pct": 78,
+        "regulatory_change_impact": "medium"
+      },
+      "incidents": {
+        "incidents_90d": 3,
+        "near_misses_90d": 5,
+        "repeat_incident_rate_pct": 9,
+        "root_cause_closure_pct": 78
+      },
+      "confidence": {
+        "assessment_confidence_pct": 88,
+        "evidence_completeness_pct": 82,
+        "source_count": 5
+      },
+      "dependency": {
+        "criticality": "critical",
+        "third_party_spof": true,
+        "correlated_tags": [
+          "exploit"
+        ]
+      },
+      "predictive": {
+        "exposure_multiplier": 1.56,
+        "velocity_uplift": 0.2,
+        "confidence_weight": 0.88,
+        "predictive_score": 53,
+        "predictive_band": "medium"
+      }
+    },
+    {
+      "id": "AI-R-033",
+      "symbol": "AB",
+      "name": "API Abuse",
+      "description": "APIs misused or overused.",
+      "category": "Security",
+      "likelihood": 3,
+      "impact": 3,
+      "score": 60,
+      "trend": "flat",
+      "mitigation_status": "in_progress",
+      "owner": "AppSec",
+      "mitigations": [
+        "Quotas",
+        "Anomaly detection"
+      ],
+      "references": [
+        "OWASP API Top 10"
+      ],
+      "tags": [
+        "abuse"
+      ],
+      "last_reviewed": "2026-08-28",
+      "risk_velocity": {
+        "score_delta_30d": 1,
+        "score_delta_90d": 2,
+        "momentum": "stable",
+        "days_since_change": 18
+      },
+      "control_effectiveness": {
+        "implementation_pct": 50,
+        "test_pass_rate_pct": 45,
+        "evidence_coverage_pct": 60,
+        "effectiveness_score": 50,
+        "residual_score": 30
+      },
+      "detection_response": {
+        "mttd_hours": 6,
+        "mttr_hours": 16,
+        "alert_coverage_pct": 82,
+        "rollback_time_hours": 5,
+        "dry_run_success_pct": 88
+      },
+      "exposure": {
+        "affected_systems": 6,
+        "affected_records": 400000,
+        "affected_users": 100000,
+        "data_sensitivity": "medium",
+        "external_facing": true,
+        "privilege_level": "medium",
+        "autonomy_tier": 0
+      },
+      "assurance": {
+        "eval_coverage_pct": 64,
+        "red_team_coverage_pct": 44,
+        "framework_mapping_pct": 76,
+        "evidence_freshness_days": 20,
+        "independent_validation": false
+      },
+      "leading_indicators": {
+        "injection_success_pct": 1.8,
+        "secret_findings": 4,
+        "token_ttl_hours": 12,
+        "egress_block_coverage_pct": 84,
+        "vuln_age_days": 28,
+        "epss": 0.18
+      },
+      "agentic_controls": null,
+      "governance_health": {
+        "review_overdue_days": 2,
+        "owner_risk_load": 6,
+        "raci_coverage_pct": 76,
+        "signoff_sla_breach_pct": 8,
+        "audit_finding_closure_pct": 80
+      },
+      "compliance": {
+        "control_mapping_pct": 76,
+        "compliance_test_pass_pct": 77,
+        "regulatory_change_impact": "low"
+      },
+      "incidents": {
+        "incidents_90d": 1,
+        "near_misses_90d": 3,
+        "repeat_incident_rate_pct": 6,
+        "root_cause_closure_pct": 80
+      },
+      "confidence": {
+        "assessment_confidence_pct": 80,
+        "evidence_completeness_pct": 76,
+        "source_count": 4
+      },
+      "dependency": {
+        "criticality": "medium",
+        "third_party_spof": false,
+        "correlated_tags": [
+          "abuse"
+        ]
+      },
+      "predictive": {
+        "exposure_multiplier": 1.33,
+        "velocity_uplift": 0,
+        "confidence_weight": 0.8,
+        "predictive_score": 32,
+        "predictive_band": "low"
+      }
+    },
+    {
+      "id": "AI-R-034",
+      "symbol": "TT",
+      "name": "Token Theft",
+      "description": "Keys or tokens stolen.",
+      "category": "Security",
+      "likelihood": 3,
+      "impact": 4,
+      "score": 72,
+      "trend": "flat",
+      "mitigation_status": "in_progress",
+      "owner": "AppSec",
+      "mitigations": [
+        "Short-lived tokens",
+        "mTLS",
+        "Rotation"
+      ],
+      "references": [
+        "CIS Controls 6"
+      ],
+      "tags": [
+        "credentials"
+      ],
+      "last_reviewed": "2026-09-12",
+      "risk_velocity": {
+        "score_delta_30d": 1,
+        "score_delta_90d": 3,
+        "momentum": "stable",
+        "days_since_change": 15
+      },
+      "control_effectiveness": {
+        "implementation_pct": 50,
+        "test_pass_rate_pct": 45,
+        "evidence_coverage_pct": 60,
+        "effectiveness_score": 50,
+        "residual_score": 36
+      },
+      "detection_response": {
+        "mttd_hours": 4,
+        "mttr_hours": 12,
+        "alert_coverage_pct": 84,
+        "rollback_time_hours": 4,
+        "dry_run_success_pct": 90
+      },
+      "exposure": {
+        "affected_systems": 7,
+        "affected_records": 600000,
+        "affected_users": 150000,
+        "data_sensitivity": "high",
+        "external_facing": true,
+        "privilege_level": "high",
+        "autonomy_tier": 1
+      },
+      "assurance": {
+        "eval_coverage_pct": 66,
+        "red_team_coverage_pct": 48,
+        "framework_mapping_pct": 78,
+        "evidence_freshness_days": 18,
+        "independent_validation": false
+      },
+      "leading_indicators": {
+        "injection_success_pct": 2.2,
+        "secret_findings": 6,
+        "token_ttl_hours": 8,
+        "egress_block_coverage_pct": 80,
+        "vuln_age_days": 32,
+        "epss": 0.22
+      },
+      "agentic_controls": null,
+      "governance_health": {
+        "review_overdue_days": 2,
+        "owner_risk_load": 6,
+        "raci_coverage_pct": 78,
+        "signoff_sla_breach_pct": 7,
+        "audit_finding_closure_pct": 82
+      },
+      "compliance": {
+        "control_mapping_pct": 78,
+        "compliance_test_pass_pct": 77,
+        "regulatory_change_impact": "medium"
+      },
+      "incidents": {
+        "incidents_90d": 1,
+        "near_misses_90d": 3,
+        "repeat_incident_rate_pct": 7,
+        "root_cause_closure_pct": 80
+      },
+      "confidence": {
+        "assessment_confidence_pct": 82,
+        "evidence_completeness_pct": 78,
+        "source_count": 4
+      },
+      "dependency": {
+        "criticality": "high",
+        "third_party_spof": false,
+        "correlated_tags": [
+          "credentials"
+        ]
+      },
+      "predictive": {
+        "exposure_multiplier": 1.51,
+        "velocity_uplift": 0,
+        "confidence_weight": 0.82,
+        "predictive_score": 45,
+        "predictive_band": "low"
+      }
+    },
+    {
+      "id": "AI-R-035",
+      "symbol": "MU",
+      "name": "Malicious Use",
+      "description": "AI used for harmful intent.",
+      "category": "Security",
+      "likelihood": 4,
+      "impact": 5,
+      "score": 92,
+      "trend": "up",
+      "mitigation_status": "open",
+      "owner": "Trust & Safety",
+      "mitigations": [
+        "Abuse detection",
+        "Acceptable use policy"
+      ],
+      "references": [
+        "NIST AI 100-2"
+      ],
+      "tags": [
+        "abuse",
+        "policy"
+      ],
+      "last_reviewed": "2026-10-13",
+      "risk_velocity": {
+        "score_delta_30d": 6,
+        "score_delta_90d": 12,
+        "momentum": "accelerating",
+        "days_since_change": 3
+      },
+      "control_effectiveness": {
+        "implementation_pct": 30,
+        "test_pass_rate_pct": 25,
+        "evidence_coverage_pct": 45,
+        "effectiveness_score": 31,
+        "residual_score": 63
+      },
+      "detection_response": {
+        "mttd_hours": 4,
+        "mttr_hours": 12,
+        "alert_coverage_pct": 80,
+        "rollback_time_hours": 8,
+        "dry_run_success_pct": 78
+      },
+      "exposure": {
+        "affected_systems": 8,
+        "affected_records": 2000000,
+        "affected_users": 1000000,
+        "data_sensitivity": "critical",
+        "external_facing": true,
+        "privilege_level": "high",
+        "autonomy_tier": 2
+      },
+      "assurance": {
+        "eval_coverage_pct": 60,
+        "red_team_coverage_pct": 50,
+        "framework_mapping_pct": 70,
+        "evidence_freshness_days": 16,
+        "independent_validation": false
+      },
+      "leading_indicators": {
+        "injection_success_pct": 4.1,
+        "secret_findings": 7,
+        "token_ttl_hours": 24,
+        "egress_block_coverage_pct": 66,
+        "vuln_age_days": 54,
+        "epss": 0.41
+      },
+      "agentic_controls": null,
+      "governance_health": {
+        "review_overdue_days": 0,
+        "owner_risk_load": 8,
+        "raci_coverage_pct": 68,
+        "signoff_sla_breach_pct": 13,
+        "audit_finding_closure_pct": 62
+      },
+      "compliance": {
+        "control_mapping_pct": 70,
+        "compliance_test_pass_pct": 62,
+        "regulatory_change_impact": "high"
+      },
+      "incidents": {
+        "incidents_90d": 4,
+        "near_misses_90d": 7,
+        "repeat_incident_rate_pct": 19,
+        "root_cause_closure_pct": 58
+      },
+      "confidence": {
+        "assessment_confidence_pct": 85,
+        "evidence_completeness_pct": 78,
+        "source_count": 5
+      },
+      "dependency": {
+        "criticality": "critical",
+        "third_party_spof": true,
+        "correlated_tags": [
+          "abuse",
+          "policy"
+        ]
+      },
+      "predictive": {
+        "exposure_multiplier": 1.66,
+        "velocity_uplift": 0.2,
+        "confidence_weight": 0.85,
+        "predictive_score": 100,
+        "predictive_band": "critical"
+      }
+    },
+    {
+      "id": "AI-R-036",
+      "symbol": "DE",
+      "name": "Data Exfiltration",
+      "description": "Data stolen or exfiltrated.",
+      "category": "Security",
+      "likelihood": 4,
+      "impact": 5,
+      "score": 92,
+      "trend": "up",
+      "mitigation_status": "open",
+      "owner": "Security",
+      "mitigations": [
+        "Egress filtering",
+        "DLP",
+        "SIEM alerts"
+      ],
+      "references": [
+        "CIS Controls 13",
+        "OWASP LLM06"
+      ],
+      "tags": [
+        "exploit",
+        "security-critical"
+      ],
+      "last_reviewed": "2026-10-14",
+      "risk_velocity": {
+        "score_delta_30d": 6,
+        "score_delta_90d": 13,
+        "momentum": "accelerating",
+        "days_since_change": 2
+      },
+      "control_effectiveness": {
+        "implementation_pct": 30,
+        "test_pass_rate_pct": 25,
+        "evidence_coverage_pct": 45,
+        "effectiveness_score": 31,
+        "residual_score": 63
+      },
+      "detection_response": {
+        "mttd_hours": 2,
+        "mttr_hours": 8,
+        "alert_coverage_pct": 88,
+        "rollback_time_hours": 6,
+        "dry_run_success_pct": 76
+      },
+      "exposure": {
+        "affected_systems": 9,
+        "affected_records": 3000000,
+        "affected_users": 800000,
+        "data_sensitivity": "critical",
+        "external_facing": true,
+        "privilege_level": "critical",
+        "autonomy_tier": 1
+      },
+      "assurance": {
+        "eval_coverage_pct": 62,
+        "red_team_coverage_pct": 56,
+        "framework_mapping_pct": 72,
+        "evidence_freshness_days": 12,
+        "independent_validation": false
+      },
+      "leading_indicators": {
+        "injection_success_pct": 5.2,
+        "secret_findings": 10,
+        "token_ttl_hours": 24,
+        "egress_block_coverage_pct": 64,
+        "vuln_age_days": 58,
+        "epss": 0.48
+      },
+      "agentic_controls": null,
+      "governance_health": {
+        "review_overdue_days": 0,
+        "owner_risk_load": 9,
+        "raci_coverage_pct": 66,
+        "signoff_sla_breach_pct": 15,
+        "audit_finding_closure_pct": 58
+      },
+      "compliance": {
+        "control_mapping_pct": 72,
+        "compliance_test_pass_pct": 60,
+        "regulatory_change_impact": "high"
+      },
+      "incidents": {
+        "incidents_90d": 4,
+        "near_misses_90d": 8,
+        "repeat_incident_rate_pct": 21,
+        "root_cause_closure_pct": 54
+      },
+      "confidence": {
+        "assessment_confidence_pct": 90,
+        "evidence_completeness_pct": 84,
+        "source_count": 6
+      },
+      "dependency": {
+        "criticality": "critical",
+        "third_party_spof": true,
+        "correlated_tags": [
+          "exploit",
+          "security-critical"
+        ]
+      },
+      "predictive": {
+        "exposure_multiplier": 1.75,
+        "velocity_uplift": 0.2,
+        "confidence_weight": 0.9,
+        "predictive_score": 100,
+        "predictive_band": "critical"
+      }
+    },
+    {
+      "id": "AI-R-037",
+      "symbol": "DP",
+      "name": "Deployment Risk",
+      "description": "Unsafe or unstable deployment.",
+      "category": "Security",
+      "likelihood": 3,
+      "impact": 3,
+      "score": 60,
+      "trend": "flat",
+      "mitigation_status": "in_progress",
+      "owner": "Platform Eng",
+      "mitigations": [
+        "Canary deploys",
+        "Blue/green",
+        "Rollback SLAs"
+      ],
+      "references": [
+        "Google SRE"
+      ],
+      "tags": [
+        "ops"
+      ],
+      "last_reviewed": "2026-09-06",
+      "risk_velocity": {
+        "score_delta_30d": 1,
+        "score_delta_90d": 2,
+        "momentum": "stable",
+        "days_since_change": 17
+      },
+      "control_effectiveness": {
+        "implementation_pct": 55,
+        "test_pass_rate_pct": 50,
+        "evidence_coverage_pct": 65,
+        "effectiveness_score": 55,
+        "residual_score": 27
+      },
+      "detection_response": {
+        "mttd_hours": 5,
+        "mttr_hours": 14,
+        "alert_coverage_pct": 86,
+        "rollback_time_hours": 3,
+        "dry_run_success_pct": 92
+      },
+      "exposure": {
+        "affected_systems": 6,
+        "affected_records": 300000,
+        "affected_users": 80000,
+        "data_sensitivity": "medium",
+        "external_facing": true,
+        "privilege_level": "medium",
+        "autonomy_tier": 1
+      },
+      "assurance": {
+        "eval_coverage_pct": 68,
+        "red_team_coverage_pct": 42,
+        "framework_mapping_pct": 78,
+        "evidence_freshness_days": 20,
+        "independent_validation": false
+      },
+      "leading_indicators": {
+        "injection_success_pct": 1.6,
+        "secret_findings": 3,
+        "token_ttl_hours": 12,
+        "egress_block_coverage_pct": 86,
+        "vuln_age_days": 24,
+        "epss": 0.15
+      },
+      "agentic_controls": null,
+      "governance_health": {
+        "review_overdue_days": 2,
+        "owner_risk_load": 6,
+        "raci_coverage_pct": 80,
+        "signoff_sla_breach_pct": 7,
+        "audit_finding_closure_pct": 84
+      },
+      "compliance": {
+        "control_mapping_pct": 78,
+        "compliance_test_pass_pct": 79,
+        "regulatory_change_impact": "low"
+      },
+      "incidents": {
+        "incidents_90d": 1,
+        "near_misses_90d": 2,
+        "repeat_incident_rate_pct": 5,
+        "root_cause_closure_pct": 84
+      },
+      "confidence": {
+        "assessment_confidence_pct": 82,
+        "evidence_completeness_pct": 78,
+        "source_count": 4
+      },
+      "dependency": {
+        "criticality": "medium",
+        "third_party_spof": false,
+        "correlated_tags": [
+          "ops"
+        ]
+      },
+      "predictive": {
+        "exposure_multiplier": 1.33,
+        "velocity_uplift": 0,
+        "confidence_weight": 0.82,
+        "predictive_score": 29,
+        "predictive_band": "low"
+      }
+    },
+    {
+      "id": "AI-R-038",
+      "symbol": "IG",
+      "name": "Integration Risk",
+      "description": "Failures in integrations.",
+      "category": "Security",
+      "likelihood": 2,
+      "impact": 3,
+      "score": 52,
+      "trend": "flat",
+      "mitigation_status": "in_progress",
+      "owner": "Platform Eng",
+      "mitigations": [
+        "Contract tests",
+        "Circuit breakers"
+      ],
+      "references": [
+        "NIST AI RMF MANAGE 2.3"
+      ],
+      "tags": [
+        "ops"
+      ],
+      "last_reviewed": "2026-08-18",
+      "risk_velocity": {
+        "score_delta_30d": 1,
+        "score_delta_90d": 2,
+        "momentum": "stable",
+        "days_since_change": 19
+      },
+      "control_effectiveness": {
+        "implementation_pct": 55,
+        "test_pass_rate_pct": 50,
+        "evidence_coverage_pct": 65,
+        "effectiveness_score": 55,
+        "residual_score": 23
+      },
+      "detection_response": {
+        "mttd_hours": 7,
+        "mttr_hours": 18,
+        "alert_coverage_pct": 80,
+        "rollback_time_hours": 5,
+        "dry_run_success_pct": 88
+      },
+      "exposure": {
+        "affected_systems": 4,
+        "affected_records": 100000,
+        "affected_users": 30000,
+        "data_sensitivity": "low",
+        "external_facing": true,
+        "privilege_level": "low",
+        "autonomy_tier": 1
+      },
+      "assurance": {
+        "eval_coverage_pct": 62,
+        "red_team_coverage_pct": 34,
+        "framework_mapping_pct": 74,
+        "evidence_freshness_days": 26,
+        "independent_validation": false
+      },
+      "leading_indicators": {
+        "injection_success_pct": 1.2,
+        "secret_findings": 2,
+        "token_ttl_hours": 12,
+        "egress_block_coverage_pct": 88,
+        "vuln_age_days": 20,
+        "epss": 0.12
+      },
+      "agentic_controls": null,
+      "governance_health": {
+        "review_overdue_days": 4,
+        "owner_risk_load": 5,
+        "raci_coverage_pct": 76,
+        "signoff_sla_breach_pct": 9,
+        "audit_finding_closure_pct": 80
+      },
+      "compliance": {
+        "control_mapping_pct": 74,
+        "compliance_test_pass_pct": 76,
+        "regulatory_change_impact": "low"
+      },
+      "incidents": {
+        "incidents_90d": 0,
+        "near_misses_90d": 2,
+        "repeat_incident_rate_pct": 3,
+        "root_cause_closure_pct": 82
+      },
+      "confidence": {
+        "assessment_confidence_pct": 78,
+        "evidence_completeness_pct": 72,
+        "source_count": 3
+      },
+      "dependency": {
+        "criticality": "medium",
+        "third_party_spof": false,
+        "correlated_tags": [
+          "ops"
+        ]
+      },
+      "predictive": {
+        "exposure_multiplier": 1.15,
+        "velocity_uplift": 0,
+        "confidence_weight": 0.78,
+        "predictive_score": 21,
+        "predictive_band": "safe"
+      }
+    },
+    {
+      "id": "AI-R-039",
+      "symbol": "LT",
+      "name": "Latency Risk",
+      "description": "Slow responses impact users.",
+      "category": "Security",
+      "likelihood": 2,
+      "impact": 2,
+      "score": 40,
+      "trend": "down",
+      "mitigation_status": "mitigated",
+      "owner": "Platform Eng",
+      "mitigations": [
+        "SLOs",
+        "Caching",
+        "Async processing"
+      ],
+      "references": [
+        "Google SRE"
+      ],
+      "tags": [
+        "ops"
+      ],
+      "last_reviewed": "2026-07-01",
+      "risk_velocity": {
+        "score_delta_30d": -2,
+        "score_delta_90d": -6,
+        "momentum": "decelerating",
+        "days_since_change": 24
+      },
+      "control_effectiveness": {
+        "implementation_pct": 80,
+        "test_pass_rate_pct": 75,
+        "evidence_coverage_pct": 85,
+        "effectiveness_score": 79,
+        "residual_score": 8
+      },
+      "detection_response": {
+        "mttd_hours": 4,
+        "mttr_hours": 10,
+        "alert_coverage_pct": 90,
+        "rollback_time_hours": 2,
+        "dry_run_success_pct": 94
+      },
+      "exposure": {
+        "affected_systems": 3,
+        "affected_records": 50000,
+        "affected_users": 20000,
+        "data_sensitivity": "low",
+        "external_facing": true,
+        "privilege_level": "low",
+        "autonomy_tier": 0
+      },
+      "assurance": {
+        "eval_coverage_pct": 84,
+        "red_team_coverage_pct": 50,
+        "framework_mapping_pct": 86,
+        "evidence_freshness_days": 12,
+        "independent_validation": true
+      },
+      "leading_indicators": {
+        "injection_success_pct": 0.9,
+        "secret_findings": 1,
+        "token_ttl_hours": 8,
+        "egress_block_coverage_pct": 92,
+        "vuln_age_days": 14,
+        "epss": 0.08
+      },
+      "agentic_controls": null,
+      "governance_health": {
+        "review_overdue_days": 0,
+        "owner_risk_load": 3,
+        "raci_coverage_pct": 88,
+        "signoff_sla_breach_pct": 2,
+        "audit_finding_closure_pct": 92
+      },
+      "compliance": {
+        "control_mapping_pct": 86,
+        "compliance_test_pass_pct": 88,
+        "regulatory_change_impact": "low"
+      },
+      "incidents": {
+        "incidents_90d": 0,
+        "near_misses_90d": 0,
+        "repeat_incident_rate_pct": 1,
+        "root_cause_closure_pct": 94
+      },
+      "confidence": {
+        "assessment_confidence_pct": 88,
+        "evidence_completeness_pct": 86,
+        "source_count": 4
+      },
+      "dependency": {
+        "criticality": "low",
+        "third_party_spof": false,
+        "correlated_tags": [
+          "ops"
+        ]
+      },
+      "predictive": {
+        "exposure_multiplier": 1.1,
+        "velocity_uplift": -0.1,
+        "confidence_weight": 0.88,
+        "predictive_score": 7,
+        "predictive_band": "safe"
+      }
+    },
+    {
+      "id": "AI-R-040",
+      "symbol": "CO",
+      "name": "Cost Overrun",
+      "description": "Costs exceed expectations.",
+      "category": "Security",
+      "likelihood": 3,
+      "impact": 4,
+      "score": 72,
+      "trend": "up",
+      "mitigation_status": "in_progress",
+      "owner": "FinOps",
+      "mitigations": [
+        "Budgets & alerts",
+        "Model routing",
+        "Caching"
+      ],
+      "references": [
+        "FinOps Foundation"
+      ],
+      "tags": [
+        "cost"
+      ],
+      "last_reviewed": "2026-09-25",
+      "risk_velocity": {
+        "score_delta_30d": 3,
+        "score_delta_90d": 7,
+        "momentum": "accelerating",
+        "days_since_change": 7
+      },
+      "control_effectiveness": {
+        "implementation_pct": 50,
+        "test_pass_rate_pct": 45,
+        "evidence_coverage_pct": 60,
+        "effectiveness_score": 50,
+        "residual_score": 36
+      },
+      "detection_response": {
+        "mttd_hours": 8,
+        "mttr_hours": 20,
+        "alert_coverage_pct": 78,
+        "rollback_time_hours": 6,
+        "dry_run_success_pct": 86
+      },
+      "exposure": {
+        "affected_systems": 5,
+        "affected_records": 100000,
+        "affected_users": 50000,
+        "data_sensitivity": "low",
+        "external_facing": false,
+        "privilege_level": "medium",
+        "autonomy_tier": 1
+      },
+      "assurance": {
+        "eval_coverage_pct": 60,
+        "red_team_coverage_pct": 30,
+        "framework_mapping_pct": 72,
+        "evidence_freshness_days": 22,
+        "independent_validation": false
+      },
+      "leading_indicators": {
+        "injection_success_pct": 1.1,
+        "secret_findings": 2,
+        "token_ttl_hours": 12,
+        "egress_block_coverage_pct": 86,
+        "vuln_age_days": 22,
+        "epss": 0.1
+      },
+      "agentic_controls": null,
+      "governance_health": {
+        "review_overdue_days": 3,
+        "owner_risk_load": 5,
+        "raci_coverage_pct": 74,
+        "signoff_sla_breach_pct": 8,
+        "audit_finding_closure_pct": 78
+      },
+      "compliance": {
+        "control_mapping_pct": 72,
+        "compliance_test_pass_pct": 74,
+        "regulatory_change_impact": "low"
+      },
+      "incidents": {
+        "incidents_90d": 1,
+        "near_misses_90d": 2,
+        "repeat_incident_rate_pct": 5,
+        "root_cause_closure_pct": 80
+      },
+      "confidence": {
+        "assessment_confidence_pct": 80,
+        "evidence_completeness_pct": 74,
+        "source_count": 3
+      },
+      "dependency": {
+        "criticality": "medium",
+        "third_party_spof": false,
+        "correlated_tags": [
+          "cost"
+        ]
+      },
+      "predictive": {
+        "exposure_multiplier": 1.13,
+        "velocity_uplift": 0.2,
+        "confidence_weight": 0.8,
+        "predictive_score": 39,
+        "predictive_band": "low"
+      }
+    },
+    {
+      "id": "AI-R-041",
+      "symbol": "MG",
+      "name": "Monitoring Gap",
+      "description": "Issues go undetected.",
+      "category": "Governance",
+      "likelihood": 4,
+      "impact": 4,
+      "score": 80,
+      "trend": "up",
+      "mitigation_status": "in_progress",
+      "owner": "ML Platform",
+      "mitigations": [
+        "Observability stack",
+        "Alerting SLOs"
+      ],
+      "references": [
+        "NIST AI RMF MEASURE 2.4"
+      ],
+      "tags": [
+        "monitoring"
+      ],
+      "last_reviewed": "2026-10-07",
+      "risk_velocity": {
+        "score_delta_30d": 4,
+        "score_delta_90d": 9,
+        "momentum": "accelerating",
+        "days_since_change": 5
+      },
+      "control_effectiveness": {
+        "implementation_pct": 55,
+        "test_pass_rate_pct": 50,
+        "evidence_coverage_pct": 65,
+        "effectiveness_score": 55,
+        "residual_score": 36
+      },
+      "detection_response": {
+        "mttd_hours": 10,
+        "mttr_hours": 24,
+        "alert_coverage_pct": 70,
+        "rollback_time_hours": 8,
+        "dry_run_success_pct": 82
+      },
+      "exposure": {
+        "affected_systems": 8,
+        "affected_records": 1000000,
+        "affected_users": 300000,
+        "data_sensitivity": "high",
+        "external_facing": true,
+        "privilege_level": "high",
+        "autonomy_tier": 1
+      },
+      "assurance": {
+        "eval_coverage_pct": 62,
+        "red_team_coverage_pct": 40,
+        "framework_mapping_pct": 72,
+        "evidence_freshness_days": 24,
+        "independent_validation": false
+      },
+      "leading_indicators": {
+        "review_overdue_days": 5,
+        "raci_coverage_pct": 70,
+        "signoff_sla_breach_pct": 12,
+        "audit_finding_closure_pct": 68,
+        "control_mapping_pct": 72
+      },
+      "agentic_controls": null,
+      "governance_health": {
+        "review_overdue_days": 5,
+        "owner_risk_load": 7,
+        "raci_coverage_pct": 70,
+        "signoff_sla_breach_pct": 12,
+        "audit_finding_closure_pct": 68
+      },
+      "compliance": {
+        "control_mapping_pct": 72,
+        "compliance_test_pass_pct": 68,
+        "regulatory_change_impact": "high"
+      },
+      "incidents": {
+        "incidents_90d": 3,
+        "near_misses_90d": 5,
+        "repeat_incident_rate_pct": 13,
+        "root_cause_closure_pct": 64
+      },
+      "confidence": {
+        "assessment_confidence_pct": 85,
+        "evidence_completeness_pct": 76,
+        "source_count": 4
+      },
+      "dependency": {
+        "criticality": "high",
+        "third_party_spof": false,
+        "correlated_tags": [
+          "monitoring"
+        ]
+      },
+      "predictive": {
+        "exposure_multiplier": 1.56,
+        "velocity_uplift": 0.2,
+        "confidence_weight": 0.85,
+        "predictive_score": 57,
+        "predictive_band": "medium"
+      }
+    },
+    {
+      "id": "AI-R-042",
+      "symbol": "DO",
+      "name": "Decision Ownership",
+      "description": "Unclear who owns decisions.",
+      "category": "Governance",
+      "likelihood": 3,
+      "impact": 3,
+      "score": 60,
+      "trend": "flat",
+      "mitigation_status": "in_progress",
+      "owner": "AI Governance",
+      "mitigations": [
+        "RACI matrices",
+        "Sign-off workflows"
+      ],
+      "references": [
+        "NIST AI RMF GOVERN 1.2"
+      ],
+      "tags": [
+        "governance"
+      ],
+      "last_reviewed": "2026-08-14",
+      "risk_velocity": {
+        "score_delta_30d": 1,
+        "score_delta_90d": 2,
+        "momentum": "stable",
+        "days_since_change": 21
+      },
+      "control_effectiveness": {
+        "implementation_pct": 50,
+        "test_pass_rate_pct": 45,
+        "evidence_coverage_pct": 60,
+        "effectiveness_score": 50,
+        "residual_score": 30
+      },
+      "detection_response": {
+        "mttd_hours": 16,
+        "mttr_hours": 36,
+        "alert_coverage_pct": 68,
+        "rollback_time_hours": 10,
+        "dry_run_success_pct": 80
+      },
+      "exposure": {
+        "affected_systems": 4,
+        "affected_records": 200000,
+        "affected_users": 50000,
+        "data_sensitivity": "medium",
+        "external_facing": false,
+        "privilege_level": "medium",
+        "autonomy_tier": 0
+      },
+      "assurance": {
+        "eval_coverage_pct": 58,
+        "red_team_coverage_pct": 32,
+        "framework_mapping_pct": 70,
+        "evidence_freshness_days": 30,
+        "independent_validation": false
+      },
+      "leading_indicators": {
+        "review_overdue_days": 12,
+        "raci_coverage_pct": 66,
+        "signoff_sla_breach_pct": 15,
+        "audit_finding_closure_pct": 70,
+        "control_mapping_pct": 70
+      },
+      "agentic_controls": null,
+      "governance_health": {
+        "review_overdue_days": 12,
+        "owner_risk_load": 5,
+        "raci_coverage_pct": 66,
+        "signoff_sla_breach_pct": 15,
+        "audit_finding_closure_pct": 70
+      },
+      "compliance": {
+        "control_mapping_pct": 70,
+        "compliance_test_pass_pct": 72,
+        "regulatory_change_impact": "medium"
+      },
+      "incidents": {
+        "incidents_90d": 0,
+        "near_misses_90d": 2,
+        "repeat_incident_rate_pct": 4,
+        "root_cause_closure_pct": 76
+      },
+      "confidence": {
+        "assessment_confidence_pct": 75,
+        "evidence_completeness_pct": 68,
+        "source_count": 3
+      },
+      "dependency": {
+        "criticality": "medium",
+        "third_party_spof": false,
+        "correlated_tags": [
+          "governance"
+        ]
+      },
+      "predictive": {
+        "exposure_multiplier": 1.23,
+        "velocity_uplift": 0,
+        "confidence_weight": 0.75,
+        "predictive_score": 28,
+        "predictive_band": "low"
+      }
+    },
+    {
+      "id": "AI-R-043",
+      "symbol": "HO",
+      "name": "Human Oversight",
+      "description": "Insufficient human supervision.",
+      "category": "Governance",
+      "likelihood": 4,
+      "impact": 4,
+      "score": 80,
+      "trend": "up",
+      "mitigation_status": "in_progress",
+      "owner": "AI Governance",
+      "mitigations": [
+        "HITL workflows",
+        "Escalation paths"
+      ],
+      "references": [
+        "EU AI Act Art. 14"
+      ],
+      "tags": [
+        "oversight"
+      ],
+      "last_reviewed": "2026-09-21",
+      "risk_velocity": {
+        "score_delta_30d": 4,
+        "score_delta_90d": 8,
+        "momentum": "accelerating",
+        "days_since_change": 6
+      },
+      "control_effectiveness": {
+        "implementation_pct": 50,
+        "test_pass_rate_pct": 45,
+        "evidence_coverage_pct": 60,
+        "effectiveness_score": 50,
+        "residual_score": 40
+      },
+      "detection_response": {
+        "mttd_hours": 9,
+        "mttr_hours": 22,
+        "alert_coverage_pct": 74,
+        "rollback_time_hours": 8,
+        "dry_run_success_pct": 82
+      },
+      "exposure": {
+        "affected_systems": 7,
+        "affected_records": 600000,
+        "affected_users": 200000,
+        "data_sensitivity": "high",
+        "external_facing": true,
+        "privilege_level": "high",
+        "autonomy_tier": 3
+      },
+      "assurance": {
+        "eval_coverage_pct": 60,
+        "red_team_coverage_pct": 38,
+        "framework_mapping_pct": 70,
+        "evidence_freshness_days": 26,
+        "independent_validation": false
+      },
+      "leading_indicators": {
+        "review_overdue_days": 6,
+        "raci_coverage_pct": 68,
+        "signoff_sla_breach_pct": 13,
+        "audit_finding_closure_pct": 66,
+        "control_mapping_pct": 70
+      },
+      "agentic_controls": null,
+      "governance_health": {
+        "review_overdue_days": 6,
+        "owner_risk_load": 7,
+        "raci_coverage_pct": 68,
+        "signoff_sla_breach_pct": 13,
+        "audit_finding_closure_pct": 66
+      },
+      "compliance": {
+        "control_mapping_pct": 70,
+        "compliance_test_pass_pct": 66,
+        "regulatory_change_impact": "high"
+      },
+      "incidents": {
+        "incidents_90d": 2,
+        "near_misses_90d": 4,
+        "repeat_incident_rate_pct": 12,
+        "root_cause_closure_pct": 64
+      },
+      "confidence": {
+        "assessment_confidence_pct": 80,
+        "evidence_completeness_pct": 74,
+        "source_count": 4
+      },
+      "dependency": {
+        "criticality": "high",
+        "third_party_spof": false,
+        "correlated_tags": [
+          "oversight"
+        ]
+      },
+      "predictive": {
+        "exposure_multiplier": 1.51,
+        "velocity_uplift": 0.2,
+        "confidence_weight": 0.8,
+        "predictive_score": 58,
+        "predictive_band": "medium"
+      }
+    },
+    {
+      "id": "AI-R-044",
+      "symbol": "TR",
+      "name": "Traceability",
+      "description": "Actions are not traceable.",
+      "category": "Governance",
+      "likelihood": 3,
+      "impact": 3,
+      "score": 60,
+      "trend": "flat",
+      "mitigation_status": "in_progress",
+      "owner": "AI Governance",
+      "mitigations": [
+        "Audit logs",
+        "Correlation IDs"
+      ],
+      "references": [
+        "ISO/IEC 42001"
+      ],
+      "tags": [
+        "audit"
+      ],
+      "last_reviewed": "2026-09-02",
+      "risk_velocity": {
+        "score_delta_30d": 1,
+        "score_delta_90d": 2,
+        "momentum": "stable",
+        "days_since_change": 19
+      },
+      "control_effectiveness": {
+        "implementation_pct": 50,
+        "test_pass_rate_pct": 45,
+        "evidence_coverage_pct": 60,
+        "effectiveness_score": 50,
+        "residual_score": 30
+      },
+      "detection_response": {
+        "mttd_hours": 12,
+        "mttr_hours": 28,
+        "alert_coverage_pct": 72,
+        "rollback_time_hours": 9,
+        "dry_run_success_pct": 84
+      },
+      "exposure": {
+        "affected_systems": 6,
+        "affected_records": 300000,
+        "affected_users": 100000,
+        "data_sensitivity": "medium",
+        "external_facing": true,
+        "privilege_level": "medium",
+        "autonomy_tier": 1
+      },
+      "assurance": {
+        "eval_coverage_pct": 60,
+        "red_team_coverage_pct": 34,
+        "framework_mapping_pct": 72,
+        "evidence_freshness_days": 28,
+        "independent_validation": false
+      },
+      "leading_indicators": {
+        "review_overdue_days": 4,
+        "raci_coverage_pct": 72,
+        "signoff_sla_breach_pct": 10,
+        "audit_finding_closure_pct": 72,
+        "control_mapping_pct": 72
+      },
+      "agentic_controls": null,
+      "governance_health": {
+        "review_overdue_days": 4,
+        "owner_risk_load": 6,
+        "raci_coverage_pct": 72,
+        "signoff_sla_breach_pct": 10,
+        "audit_finding_closure_pct": 72
+      },
+      "compliance": {
+        "control_mapping_pct": 72,
+        "compliance_test_pass_pct": 74,
+        "regulatory_change_impact": "medium"
+      },
+      "incidents": {
+        "incidents_90d": 1,
+        "near_misses_90d": 2,
+        "repeat_incident_rate_pct": 6,
+        "root_cause_closure_pct": 78
+      },
+      "confidence": {
+        "assessment_confidence_pct": 80,
+        "evidence_completeness_pct": 72,
+        "source_count": 3
+      },
+      "dependency": {
+        "criticality": "medium",
+        "third_party_spof": false,
+        "correlated_tags": [
+          "audit"
+        ]
+      },
+      "predictive": {
+        "exposure_multiplier": 1.33,
+        "velocity_uplift": 0,
+        "confidence_weight": 0.8,
+        "predictive_score": 32,
+        "predictive_band": "low"
+      }
+    },
+    {
+      "id": "AI-R-045",
+      "symbol": "CP",
+      "name": "Compliance Risk",
+      "description": "Violates laws or standards.",
+      "category": "Governance",
+      "likelihood": 4,
+      "impact": 5,
+      "score": 92,
+      "trend": "up",
+      "mitigation_status": "open",
+      "owner": "Legal",
+      "mitigations": [
+        "Control mapping",
+        "Compliance monitoring"
+      ],
+      "references": [
+        "EU AI Act",
+        "ISO/IEC 42001"
+      ],
+      "tags": [
+        "compliance",
+        "regulatory"
+      ],
+      "last_reviewed": "2026-10-09",
+      "risk_velocity": {
+        "score_delta_30d": 6,
+        "score_delta_90d": 12,
+        "momentum": "accelerating",
+        "days_since_change": 3
+      },
+      "control_effectiveness": {
+        "implementation_pct": 30,
+        "test_pass_rate_pct": 25,
+        "evidence_coverage_pct": 45,
+        "effectiveness_score": 31,
+        "residual_score": 63
+      },
+      "detection_response": {
+        "mttd_hours": 8,
+        "mttr_hours": 20,
+        "alert_coverage_pct": 70,
+        "rollback_time_hours": 12,
+        "dry_run_success_pct": 78
+      },
+      "exposure": {
+        "affected_systems": 8,
+        "affected_records": 2000000,
+        "affected_users": 500000,
+        "data_sensitivity": "critical",
+        "external_facing": true,
+        "privilege_level": "high",
+        "autonomy_tier": 1
+      },
+      "assurance": {
+        "eval_coverage_pct": 58,
+        "red_team_coverage_pct": 36,
+        "framework_mapping_pct": 68,
+        "evidence_freshness_days": 22,
+        "independent_validation": false
+      },
+      "leading_indicators": {
+        "review_overdue_days": 8,
+        "raci_coverage_pct": 64,
+        "signoff_sla_breach_pct": 16,
+        "audit_finding_closure_pct": 60,
+        "control_mapping_pct": 68
+      },
+      "agentic_controls": null,
+      "governance_health": {
+        "review_overdue_days": 8,
+        "owner_risk_load": 9,
+        "raci_coverage_pct": 64,
+        "signoff_sla_breach_pct": 16,
+        "audit_finding_closure_pct": 60
+      },
+      "compliance": {
+        "control_mapping_pct": 68,
+        "compliance_test_pass_pct": 58,
+        "regulatory_change_impact": "high"
+      },
+      "incidents": {
+        "incidents_90d": 4,
+        "near_misses_90d": 7,
+        "repeat_incident_rate_pct": 20,
+        "root_cause_closure_pct": 56
+      },
+      "confidence": {
+        "assessment_confidence_pct": 88,
+        "evidence_completeness_pct": 80,
+        "source_count": 5
+      },
+      "dependency": {
+        "criticality": "critical",
+        "third_party_spof": true,
+        "correlated_tags": [
+          "compliance",
+          "regulatory"
+        ]
+      },
+      "predictive": {
+        "exposure_multiplier": 1.66,
+        "velocity_uplift": 0.2,
+        "confidence_weight": 0.88,
+        "predictive_score": 100,
+        "predictive_band": "critical"
+      }
+    },
+    {
+      "id": "AI-R-046",
+      "symbol": "AG",
+      "name": "Audit Gap",
+      "description": "Incomplete audit records.",
+      "category": "Governance",
+      "likelihood": 3,
+      "impact": 4,
+      "score": 72,
+      "trend": "flat",
+      "mitigation_status": "in_progress",
+      "owner": "Internal Audit",
+      "mitigations": [
+        "Immutable logs",
+        "Audit playbooks"
+      ],
+      "references": [
+        "SOC 2",
+        "ISO 27001"
+      ],
+      "tags": [
+        "audit"
+      ],
+      "last_reviewed": "2026-09-16",
+      "risk_velocity": {
+        "score_delta_30d": 1,
+        "score_delta_90d": 3,
+        "momentum": "stable",
+        "days_since_change": 16
+      },
+      "control_effectiveness": {
+        "implementation_pct": 45,
+        "test_pass_rate_pct": 40,
+        "evidence_coverage_pct": 55,
+        "effectiveness_score": 45,
+        "residual_score": 40
+      },
+      "detection_response": {
+        "mttd_hours": 14,
+        "mttr_hours": 30,
+        "alert_coverage_pct": 70,
+        "rollback_time_hours": 10,
+        "dry_run_success_pct": 82
+      },
+      "exposure": {
+        "affected_systems": 5,
+        "affected_records": 500000,
+        "affected_users": 150000,
+        "data_sensitivity": "high",
+        "external_facing": false,
+        "privilege_level": "medium",
+        "autonomy_tier": 0
+      },
+      "assurance": {
+        "eval_coverage_pct": 56,
+        "red_team_coverage_pct": 30,
+        "framework_mapping_pct": 68,
+        "evidence_freshness_days": 32,
+        "independent_validation": false
+      },
+      "leading_indicators": {
+        "review_overdue_days": 10,
+        "raci_coverage_pct": 66,
+        "signoff_sla_breach_pct": 14,
+        "audit_finding_closure_pct": 64,
+        "control_mapping_pct": 68
+      },
+      "agentic_controls": null,
+      "governance_health": {
+        "review_overdue_days": 10,
+        "owner_risk_load": 6,
+        "raci_coverage_pct": 66,
+        "signoff_sla_breach_pct": 14,
+        "audit_finding_closure_pct": 64
+      },
+      "compliance": {
+        "control_mapping_pct": 68,
+        "compliance_test_pass_pct": 66,
+        "regulatory_change_impact": "high"
+      },
+      "incidents": {
+        "incidents_90d": 1,
+        "near_misses_90d": 3,
+        "repeat_incident_rate_pct": 8,
+        "root_cause_closure_pct": 70
+      },
+      "confidence": {
+        "assessment_confidence_pct": 78,
+        "evidence_completeness_pct": 70,
+        "source_count": 3
+      },
+      "dependency": {
+        "criticality": "high",
+        "third_party_spof": false,
+        "correlated_tags": [
+          "audit"
+        ]
+      },
+      "predictive": {
+        "exposure_multiplier": 1.33,
+        "velocity_uplift": 0,
+        "confidence_weight": 0.78,
+        "predictive_score": 41,
+        "predictive_band": "low"
+      }
+    },
+    {
+      "id": "AI-R-047",
+      "symbol": "LG",
+      "name": "Legal Risk",
+      "description": "Legal exposure or liability.",
+      "category": "Governance",
+      "likelihood": 4,
+      "impact": 4,
+      "score": 80,
+      "trend": "up",
+      "mitigation_status": "in_progress",
+      "owner": "Legal",
+      "mitigations": [
+        "Contract review",
+        "Disclaimers"
+      ],
+      "references": [
+        "EU AI Act"
+      ],
+      "tags": [
+        "legal"
+      ],
+      "last_reviewed": "2026-09-26",
+      "risk_velocity": {
+        "score_delta_30d": 4,
+        "score_delta_90d": 9,
+        "momentum": "accelerating",
+        "days_since_change": 5
+      },
+      "control_effectiveness": {
+        "implementation_pct": 50,
+        "test_pass_rate_pct": 45,
+        "evidence_coverage_pct": 60,
+        "effectiveness_score": 50,
+        "residual_score": 40
+      },
+      "detection_response": {
+        "mttd_hours": 10,
+        "mttr_hours": 24,
+        "alert_coverage_pct": 72,
+        "rollback_time_hours": 9,
+        "dry_run_success_pct": 80
+      },
+      "exposure": {
+        "affected_systems": 5,
+        "affected_records": 1000000,
+        "affected_users": 300000,
+        "data_sensitivity": "high",
+        "external_facing": true,
+        "privilege_level": "medium",
+        "autonomy_tier": 1
+      },
+      "assurance": {
+        "eval_coverage_pct": 60,
+        "red_team_coverage_pct": 34,
+        "framework_mapping_pct": 70,
+        "evidence_freshness_days": 28,
+        "independent_validation": false
+      },
+      "leading_indicators": {
+        "review_overdue_days": 6,
+        "raci_coverage_pct": 68,
+        "signoff_sla_breach_pct": 13,
+        "audit_finding_closure_pct": 66,
+        "control_mapping_pct": 70
+      },
+      "agentic_controls": null,
+      "governance_health": {
+        "review_overdue_days": 6,
+        "owner_risk_load": 7,
+        "raci_coverage_pct": 68,
+        "signoff_sla_breach_pct": 13,
+        "audit_finding_closure_pct": 66
+      },
+      "compliance": {
+        "control_mapping_pct": 70,
+        "compliance_test_pass_pct": 68,
+        "regulatory_change_impact": "high"
+      },
+      "incidents": {
+        "incidents_90d": 2,
+        "near_misses_90d": 4,
+        "repeat_incident_rate_pct": 11,
+        "root_cause_closure_pct": 66
+      },
+      "confidence": {
+        "assessment_confidence_pct": 82,
+        "evidence_completeness_pct": 76,
+        "source_count": 4
+      },
+      "dependency": {
+        "criticality": "high",
+        "third_party_spof": false,
+        "correlated_tags": [
+          "legal"
+        ]
+      },
+      "predictive": {
+        "exposure_multiplier": 1.48,
+        "velocity_uplift": 0.2,
+        "confidence_weight": 0.82,
+        "predictive_score": 58,
+        "predictive_band": "medium"
+      }
+    },
+    {
+      "id": "AI-R-048",
+      "symbol": "IP",
+      "name": "IP & Copyright",
+      "description": "Rights and ownership issues.",
+      "category": "Governance",
+      "likelihood": 3,
+      "impact": 3,
+      "score": 60,
+      "trend": "flat",
+      "mitigation_status": "in_progress",
+      "owner": "Legal",
+      "mitigations": [
+        "License scanning",
+        "Output attribution"
+      ],
+      "references": [
+        "DMCA",
+        "EU Copyright Directive"
+      ],
+      "tags": [
+        "legal",
+        "ip"
+      ],
+      "last_reviewed": "2026-08-05",
+      "risk_velocity": {
+        "score_delta_30d": 1,
+        "score_delta_90d": 2,
+        "momentum": "stable",
+        "days_since_change": 22
+      },
+      "control_effectiveness": {
+        "implementation_pct": 50,
+        "test_pass_rate_pct": 45,
+        "evidence_coverage_pct": 60,
+        "effectiveness_score": 50,
+        "residual_score": 30
+      },
+      "detection_response": {
+        "mttd_hours": 12,
+        "mttr_hours": 28,
+        "alert_coverage_pct": 70,
+        "rollback_time_hours": 9,
+        "dry_run_success_pct": 84
+      },
+      "exposure": {
+        "affected_systems": 3,
+        "affected_records": 300000,
+        "affected_users": 80000,
+        "data_sensitivity": "medium",
+        "external_facing": true,
+        "privilege_level": "low",
+        "autonomy_tier": 1
+      },
+      "assurance": {
+        "eval_coverage_pct": 58,
+        "red_team_coverage_pct": 30,
+        "framework_mapping_pct": 70,
+        "evidence_freshness_days": 34,
+        "independent_validation": false
+      },
+      "leading_indicators": {
+        "review_overdue_days": 14,
+        "raci_coverage_pct": 68,
+        "signoff_sla_breach_pct": 14,
+        "audit_finding_closure_pct": 70,
+        "control_mapping_pct": 70
+      },
+      "agentic_controls": null,
+      "governance_health": {
+        "review_overdue_days": 14,
+        "owner_risk_load": 5,
+        "raci_coverage_pct": 68,
+        "signoff_sla_breach_pct": 14,
+        "audit_finding_closure_pct": 70
+      },
+      "compliance": {
+        "control_mapping_pct": 70,
+        "compliance_test_pass_pct": 72,
+        "regulatory_change_impact": "medium"
+      },
+      "incidents": {
+        "incidents_90d": 0,
+        "near_misses_90d": 2,
+        "repeat_incident_rate_pct": 5,
+        "root_cause_closure_pct": 76
+      },
+      "confidence": {
+        "assessment_confidence_pct": 75,
+        "evidence_completeness_pct": 68,
+        "source_count": 3
+      },
+      "dependency": {
+        "criticality": "medium",
+        "third_party_spof": false,
+        "correlated_tags": [
+          "legal",
+          "ip"
+        ]
+      },
+      "predictive": {
+        "exposure_multiplier": 1.25,
+        "velocity_uplift": 0,
+        "confidence_weight": 0.75,
+        "predictive_score": 28,
+        "predictive_band": "low"
+      }
+    },
+    {
+      "id": "AI-R-049",
+      "symbol": "ET",
+      "name": "Ethics Risk",
+      "description": "Unethical or harmful impact.",
+      "category": "Governance",
+      "likelihood": 4,
+      "impact": 4,
+      "score": 80,
+      "trend": "up",
+      "mitigation_status": "in_progress",
+      "owner": "Ethics Board",
+      "mitigations": [
+        "Ethics review",
+        "Impact assessments"
+      ],
+      "references": [
+        "OECD AI Principles"
+      ],
+      "tags": [
+        "ethics"
+      ],
+      "last_reviewed": "2026-10-02",
+      "risk_velocity": {
+        "score_delta_30d": 4,
+        "score_delta_90d": 9,
+        "momentum": "accelerating",
+        "days_since_change": 6
+      },
+      "control_effectiveness": {
+        "implementation_pct": 50,
+        "test_pass_rate_pct": 45,
+        "evidence_coverage_pct": 60,
+        "effectiveness_score": 50,
+        "residual_score": 40
+      },
+      "detection_response": {
+        "mttd_hours": 11,
+        "mttr_hours": 26,
+        "alert_coverage_pct": 72,
+        "rollback_time_hours": 10,
+        "dry_run_success_pct": 80
+      },
+      "exposure": {
+        "affected_systems": 6,
+        "affected_records": 500000,
+        "affected_users": 200000,
+        "data_sensitivity": "high",
+        "external_facing": true,
+        "privilege_level": "medium",
+        "autonomy_tier": 2
+      },
+      "assurance": {
+        "eval_coverage_pct": 58,
+        "red_team_coverage_pct": 36,
+        "framework_mapping_pct": 70,
+        "evidence_freshness_days": 26,
+        "independent_validation": false
+      },
+      "leading_indicators": {
+        "review_overdue_days": 5,
+        "raci_coverage_pct": 70,
+        "signoff_sla_breach_pct": 12,
+        "audit_finding_closure_pct": 68,
+        "control_mapping_pct": 70
+      },
+      "agentic_controls": null,
+      "governance_health": {
+        "review_overdue_days": 5,
+        "owner_risk_load": 7,
+        "raci_coverage_pct": 70,
+        "signoff_sla_breach_pct": 12,
+        "audit_finding_closure_pct": 68
+      },
+      "compliance": {
+        "control_mapping_pct": 70,
+        "compliance_test_pass_pct": 68,
+        "regulatory_change_impact": "high"
+      },
+      "incidents": {
+        "incidents_90d": 2,
+        "near_misses_90d": 4,
+        "repeat_incident_rate_pct": 10,
+        "root_cause_closure_pct": 68
+      },
+      "confidence": {
+        "assessment_confidence_pct": 80,
+        "evidence_completeness_pct": 74,
+        "source_count": 4
+      },
+      "dependency": {
+        "criticality": "high",
+        "third_party_spof": false,
+        "correlated_tags": [
+          "ethics"
+        ]
+      },
+      "predictive": {
+        "exposure_multiplier": 1.43,
+        "velocity_uplift": 0.2,
+        "confidence_weight": 0.8,
+        "predictive_score": 55,
+        "predictive_band": "medium"
+      }
+    },
+    {
+      "id": "AI-R-050",
+      "symbol": "RR",
+      "name": "Regulatory Risk",
+      "description": "Violates legal requirements.",
+      "category": "Governance",
+      "likelihood": 4,
+      "impact": 5,
+      "score": 92,
+      "trend": "up",
+      "mitigation_status": "open",
+      "owner": "Legal",
+      "mitigations": [
+        "Regulatory watch",
+        "Control testing"
+      ],
+      "references": [
+        "EU AI Act",
+        "NIST AI RMF"
+      ],
+      "tags": [
+        "regulatory"
+      ],
+      "last_reviewed": "2026-10-12",
+      "risk_velocity": {
+        "score_delta_30d": 6,
+        "score_delta_90d": 12,
+        "momentum": "accelerating",
+        "days_since_change": 2
+      },
+      "control_effectiveness": {
+        "implementation_pct": 30,
+        "test_pass_rate_pct": 25,
+        "evidence_coverage_pct": 45,
+        "effectiveness_score": 31,
+        "residual_score": 63
+      },
+      "detection_response": {
+        "mttd_hours": 8,
+        "mttr_hours": 20,
+        "alert_coverage_pct": 70,
+        "rollback_time_hours": 12,
+        "dry_run_success_pct": 78
+      },
+      "exposure": {
+        "affected_systems": 9,
+        "affected_records": 2500000,
+        "affected_users": 600000,
+        "data_sensitivity": "critical",
+        "external_facing": true,
+        "privilege_level": "high",
+        "autonomy_tier": 1
+      },
+      "assurance": {
+        "eval_coverage_pct": 56,
+        "red_team_coverage_pct": 34,
+        "framework_mapping_pct": 66,
+        "evidence_freshness_days": 24,
+        "independent_validation": false
+      },
+      "leading_indicators": {
+        "review_overdue_days": 9,
+        "raci_coverage_pct": 62,
+        "signoff_sla_breach_pct": 17,
+        "audit_finding_closure_pct": 58,
+        "control_mapping_pct": 66
+      },
+      "agentic_controls": null,
+      "governance_health": {
+        "review_overdue_days": 9,
+        "owner_risk_load": 9,
+        "raci_coverage_pct": 62,
+        "signoff_sla_breach_pct": 17,
+        "audit_finding_closure_pct": 58
+      },
+      "compliance": {
+        "control_mapping_pct": 66,
+        "compliance_test_pass_pct": 56,
+        "regulatory_change_impact": "high"
+      },
+      "incidents": {
+        "incidents_90d": 5,
+        "near_misses_90d": 8,
+        "repeat_incident_rate_pct": 23,
+        "root_cause_closure_pct": 52
+      },
+      "confidence": {
+        "assessment_confidence_pct": 88,
+        "evidence_completeness_pct": 80,
+        "source_count": 5
+      },
+      "dependency": {
+        "criticality": "critical",
+        "third_party_spof": true,
+        "correlated_tags": [
+          "regulatory"
+        ]
+      },
+      "predictive": {
+        "exposure_multiplier": 1.66,
+        "velocity_uplift": 0.2,
+        "confidence_weight": 0.88,
+        "predictive_score": 100,
+        "predictive_band": "critical"
+      }
+    }
+  ]
+}
