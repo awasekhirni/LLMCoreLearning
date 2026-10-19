@@ -4,8 +4,8 @@ Learning LLM components ground up
 
 Components/features of LLM
 Coverage by layer of the stack:
-Stage 	Entries 
-Tokenization & Input	BPE, SentencePiece/Unigram, Embeddings (1–3)
+Stage, 	Entries 
+Tokenization & Input,	BPE, SentencePiece/Unigram, Embeddings (1–3)
 Positional Encoding	RoPE, ALiBi (4–5)
 Attention	MHA, GQA/MQA, FlashAttention, Sliding Window/Sparse (6–9)
 Architecture Blocks	MoE Routing, SwiGLU, RMSNorm, MTP, Mamba/Hybrids (10–11, 12, 38–39)
