@@ -11,7 +11,8 @@ Pretraining	AdamW, LR Schedules, Mixed Precision, Grad Checkpointing, ZeRO/FSDP,
 Inference & Serving	KV Cache, Continuous Batching/PagedAttention, Quantization (GPTQ/AWQ/FP8), Speculative Decoding, CUDA Graphs/Compilation, YaRN Long-Context (21–26)
 Alignment	SFT, RLHF/PPO, DPO/KTO, Constitutional AI/RLAIF, Reward Models, BoN Distillation, RLVR/GRPO (27–31, 40, 45)
 Capabilities & Features	Function Calling/JSON Mode, CoT/Few-Shot, RAG, Safety Classifiers, Evaluation Suites, Interpretability (SAEs, Probes), LoRA/QLoRA, Model Souping, Distillation (32–37, 41–43)
-System Integration	Entry #44 — the full end-to-end reference architecture tying every component into one production stack (training → alignment → serving → safety → eval), including cost/latency trade-offs!
+System Integration	Entry #44 — the full end-to-end reference architecture tying every component into one production stack (training → alignment → serving → safety → eval), including cost/latency trade-offs
+
 
 Todo
 1. Include comparative examples of FAISS vs TurboVector/TurboQuant (Google's paper April 2025)
