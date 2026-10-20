@@ -1,0 +1,51 @@
+NoPE (No Positional Encoding)
+
+Summary (ELI5)
+
+Imagine a classroom where children sit in a line, and each child can only whisper to the children sitting in front of them (never behind). The teacher never tells them their seat number, but because of the whispering rule, every child still knows who is “before” and “after” them—the order is built into who can talk to whom. NoPE works exactly like that: a Transformer decoder gets no explicit position badges (no sinusoidal vectors, no rotary rotations), yet the causal mask—which lets token *t* attend only to tokens ≤ t—gives the model enough information to infer order. Surprisingly, when trained on short sequences, a NoPE model often generalises to much longer sequences better than models with explicit positional encodings, because nothing breaks when the sequence length exceeds the training range.
+2. Use Cases
+
+The technical card lists two primary scenarios. Below are 7 concrete use‑cases, each with a 200–250 word description.
+
+2.1 Decoder‑only language models with infinite‑length extrapolation
+
+Problem. Standard Transformers use positional encodings (APE, RoPE, ALiBi) that are tuned for a maximum training length. When you feed a longer sequence at inference, the position representation is out‑of‑distribution and perplexity explodes. Why NoPE fits. Because NoPE never injects a position vector, there is no “position table” to run out of. The causal mask alone defines the order, so the model can, in principle, process arbitrarily long sequences without any architectural change. Kazemnejad et al. (2023) showed that NoPE generalises to longer reasoning tasks better than explicit PE methods while adding zero computational overhead.
+
+2.2 Theoretical studies of attention without positional priors
+
+Problem. Researchers want to isolate what attention learns when no positional signal is provided. Why NoPE fits. It is the cleanest baseline: any order‑sensitive behaviour must emerge from the causal mask and the data, not from engineered position features. This helps probe whether Transformers can simulate absolute and relative position internally, which the paper proves is possible in principle.
+
+2.3 Long‑context retrieval and passkey tasks
+
+Problem. Tasks like “find the passkey hidden 10 000 tokens ago” require the model to distinguish positions across very long spans. Why NoPE fits. NoPE has no fixed position range; its attention patterns can, in theory, represent relative distances without hitting a hard limit. Empirical work shows NoPE remains stable on extrapolation benchmarks where RoPE degrades.
+
+2.4 Streaming / continual inference
+
+Problem. In streaming applications (live transcription, real‑time chat), the context length grows without bound. Why NoPE fits. No positional state needs to be recomputed or extended; the causal mask is length‑agnostic. This simplifies deployment and avoids re‑anchoring tricks.
+
+2.5 Research on length generalisation in reasoning tasks
+
+Problem. Arithmetic and logical reasoning benchmarks (e.g., multi‑digit addition) test whether a model trained on short chains can solve longer ones. Why NoPE fits. The paper reports NoPE generalises from 8‑digit to 9‑digit addition, whereas several explicit PE baselines fail.
+
+2.6 Simpler model implementation and debugging
+
+Problem. Positional encoding adds hyper‑parameters (base frequency, scaling factors, rotation caches). Why NoPE fits. Removing PE removes a whole class of bugs and hyper‑parameter search. The technical card notes “zero overhead” and “simpler implementation”.
+
+2.7 Baseline for PE‑ablation studies
+
+Problem. When proposing a new positional encoding, you need a strong no‑PE baseline to prove the new method actually helps. Why NoPE fits. It is the default ablation: any gain over NoPE can be attributed to the encoding itself, not to extra parameters or compute.
+
+
+Source Datasets
+4.1 Synthetic copying task (primary, fully reproducible)
+    Origin: Generated in‑code (see generate_copy_task below).
+    License: Public domain (synthetic).
+    Size: 5 000 training sequences, 500 validation, 500 test.
+    Schema: (input_ids: LongTensor[B, L], target_ids: LongTensor[B, L]). The task is: given a random sequence of tokens, reproduce it at the next step (a classic test of length generalisation).
+
+4.2 WikiText‑2 (optional real‑text illustration)
+    Origin: HuggingFace Salesforce/wikitext, config wikitext-2-raw-v1.
+    License: Creative Commons Attribution‑ShareAlike 3.0 (CC BY‑SA 3.0).
+    Size: ~4.7 MB download, 13.5 MB generated; 36 718 train lines, 3 760 validation, 4 358 test.
+    Schema: single column text: string.
+    Usage in this module: we provide a loader but do not train a full LM (too heavy for a classroom). Instead we show how to extract a small chunk for a character‑level vocabulary, mirroring the BPE module’s approach.
