@@ -1,0 +1,95 @@
+def visualize_bpe_training(
+    corpus: str,
+    max_merges: int = 10,
+    save_dir: Union[str, Path] = "figures",
+) -> None:
+    """
+    Train a toy BPE tokenizer for a few merges and create three figures:
+    1. The input corpus (word frequency distribution).
+    2. A bar chart of the top pair frequencies at each merge step.
+    3. The final tokenization of a sample word.
+
+    Parameters
+    ----------
+    corpus : str
+    max_merges : int
+    save_dir : str or Path
+    """
+    save_dir = Path(save_dir)
+    save_dir.mkdir(parents=True, exist_ok=True)
+
+    # Pre-tokenise and prepare sequences.
+    words = re.findall(r"\w+|[^\w\s]", corpus.lower())
+    sequences = [[ch for ch in w] + ["</w>"] for w in words]
+
+    # Track merge history for visualisation.
+    merge_history = []
+    tokenizer = BPETokenizer(vocab_size=1000)
+    tokenizer.train(corpus, verbose=False)
+
+    # Re-run training manually to record pair frequencies at each step.
+    seqs = [list(s) for s in sequences]
+    for step in range(max_merges):
+        stats = Counter()
+        for seq in seqs:
+            for a, b in zip(seq, seq[1:]):
+                stats[(a, b)] += 1
+        if not stats:
+            break
+        most_common = stats.most_common(5)  # top 5 for plotting
+        merge_history.append((step, most_common))
+        pair = most_common[0][0]
+        seqs = tokenizer._merge_pair(pair, seqs)
+
+    # --- Figure 1: Input word frequency ---
+    word_counts = Counter(words)
+    top_words = word_counts.most_common(15)
+    fig1, ax1 = plt.subplots(figsize=(10, 5))
+    ax1.bar([w for w, _ in top_words], [c for _, c in top_words], color="steelblue")
+    ax1.set_title("Figure 1: Input Corpus – Top Word Frequencies")
+    ax1.set_xlabel("Word")
+    ax1.set_ylabel("Frequency")
+    ax1.tick_params(axis="x", rotation=45)
+    fig1.tight_layout()
+    fig1.savefig(save_dir / "fig1_input_corpus.png", dpi=150)
+    plt.show()
+
+    # --- Figure 2: Top pair frequencies per merge step ---
+    n_steps = len(merge_history)
+    fig2, axes = plt.subplots(1, n_steps, figsize=(4 * n_steps, 4), sharey=True)
+    if n_steps == 1:
+        axes = [axes]
+    for ax, (step, top_pairs) in zip(axes, merge_history):
+        pairs = [f"{a}+{b}" for (a, b), _ in top_pairs]
+        counts = [c for _, c in top_pairs]
+        ax.bar(pairs, counts, color="coral")
+        ax.set_title(f"Merge Step {step + 1}")
+        ax.set_xlabel("Pair")
+        ax.set_ylabel("Frequency")
+        ax.tick_params(axis="x", rotation=45)
+    fig2.suptitle("Figure 2: Top 5 Pair Frequencies at Each Merge Step", fontsize=14)
+    fig2.tight_layout()
+    fig2.savefig(save_dir / "fig2_merge_steps.png", dpi=150)
+    plt.show()
+
+    # --- Figure 3: Final tokenization of a sample word ---
+    sample_word = "lowest"
+    tokens = tokenizer._tokenize_word(sample_word)
+    fig3, ax3 = plt.subplots(figsize=(8, 3))
+    ax3.axis("off")
+    # Draw boxes for each token
+    x_positions = np.arange(len(tokens))
+    for i, (token, x) in enumerate(zip(tokens, x_positions)):
+        ax3.text(
+            x, 0.5, token,
+            ha="center", va="center", fontsize=14,
+            bbox=dict(boxstyle="round,pad=0.4", facecolor="lightyellow", edgecolor="black"),
+        )
+    ax3.set_xlim(-0.5, len(tokens) - 0.5)
+    ax3.set_ylim(0, 1)
+    ax3.set_title(f"Figure 3: Final BPE Tokenization of '{sample_word}'")
+    fig3.tight_layout()
+    fig3.savefig(save_dir / "fig3_final_tokenization.png", dpi=150)
+    plt.show()
+
+    print(f"Figures saved to: {save_dir.resolve()}")

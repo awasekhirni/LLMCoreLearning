@@ -1,0 +1,38 @@
+# LLM Implementation Encyclopedia — Learning Modules
+
+# Install once:  pip3 install -r requirements.txt
+#
+# Python 3.10+ is required for typing features (dataclasses, PEP 604 unions).
+
+
+# --- Core scientific stack (used by nearly every card) ---
+numpy>=1.26,<3.0
+pandas>=2.1,<3.0
+scikit-learn>=1.4,<2.0
+matplotlib>=3.8,<4.0
+
+# --- Tokenization  ---
+# tiktoken: OpenAI BPE reference
+tiktoken>=0.7,<1.0
+# sentencepiece: Unigram/BPE for multilingual
+sentencepiece>=0.2,<1.0
+# HuggingFace tokenizers: Rust-backed BPE/WordPiece
+tokenizers>=0.19,<1.0
+transformers>=4.44,<5.0
+
+# --- Hashing for dedup  ---
+datasketch>=1.6,<2.0
+bloom-filter2>=1.0,<3.0
+
+# --- Text utilities ---
+nltk>=3.8,<4.0
+regex>=2024.5,<2026.0
+
+# --- Optional (only needed ) ---
+# torch>=2.2        # cards that build neural components (e.g. embeddings, attention)
+# datasets>=2.20    # for HuggingFace dataset loading
+# seaborn>=0.13     # prettier statistical plots (optional)
+
+# --- Dev / reproducibility ---
+tqdm>=4.66
+ipykernel>=6.29     # for running notebooks if learner prefers
